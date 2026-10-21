@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스텝업 미디어 플래너</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* Layout: 진단 → 구성 → 미디어 플랜 3단계 흐름(좌) + 실시간 금액 패널(우, sticky). 다크 남색 브랜드, 플랜 문서는 항상 흰 종이 */
+:root{
+  --bg:#0A1330; --surface:#101C40; --surface-2:#16244F; --line:#233467;
+  --fg:#E7ECF8; --muted:#8D9BC2; --accent:#3D7BFF; --accent-fg:#FFFFFF; --accent-soft:rgba(61,123,255,.14);
+  --good:#3CC48A; --warn:#F2B544;
+  --f-body:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --r:10px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F2F5FB; --surface:#FFFFFF; --surface-2:#EAF0FB; --line:#D5DDEE;
+  --fg:#0D1838; --muted:#5B6890; --accent:#2963E8; --accent-fg:#FFFFFF; --accent-soft:rgba(41,99,232,.09);
+  --good:#178A5A; --warn:#B07800; color-scheme:light;
+}}
+:root[data-theme="light"]{
+  --bg:#F2F5FB; --surface:#FFFFFF; --surface-2:#EAF0FB; --line:#D5DDEE;
+  --fg:#0D1838; --muted:#5B6890; --accent:#2963E8; --accent-fg:#FFFFFF; --accent-soft:rgba(41,99,232,.09);
+  --good:#178A5A; --warn:#B07800; color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;font-variant-numeric:tabular-nums;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.3}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* app bar + 상담 세션 */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.appbar-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:.02em;font-size:16px;display:flex;align-items:baseline;gap:4px;flex-wrap:wrap}
+.brand small{font-size:11px;font-weight:500;opacity:.55;margin:0 2px}
+.brand .app{font-weight:500;font-size:13px;color:var(--muted);margin-left:8px;padding-left:10px;border-left:1px solid var(--line);letter-spacing:.04em}
+.modes{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.modes button{border:0;background:transparent;padding:7px 12px;font-size:13px;cursor:pointer}
+.modes button+button{border-left:1px solid var(--line)}
+.modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.session{margin-block:24px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px;display:grid;gap:12px}
+.session-h{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;flex-wrap:wrap}
+.session-h .num{font-size:12.5px;color:var(--muted);font-weight:500}
+.sess-date{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+/* 발표 모드: 화면 공유 시 항목 단가 숨김 */
+body.present .rp{display:none}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px;display:grid;gap:22px}
+.steps{display:grid;gap:22px;min-width:0}
+.step-h{display:flex;gap:14px;align-items:baseline}
+.step-no{font-family:var(--f-num);font-size:13px;color:var(--accent);font-weight:600}
+.step-h h2{font-size:20px}
+.step-h p{margin:4px 0 0;color:var(--muted);font-size:14px}
+
+/* diagnosis */
+.q{display:grid;gap:10px}
+.q-label{font-weight:600;font-size:14px}
+.q-label span{color:var(--muted);font-weight:400;margin-left:6px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.chip em{font-style:normal;font-size:12px;opacity:.75;margin-left:4px}
+.primary{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:12px 20px;font-weight:600;cursor:pointer;justify-self:start}
+.primary:hover{filter:brightness(1.08)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-weight:500;cursor:pointer}
+.ghost:hover{border-color:var(--accent)}
+
+/* packages */
+.pkgs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.pkgs{grid-template-columns:minmax(0,1fr)}}
+.pkg{position:relative;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r);padding:16px;cursor:pointer;display:grid;gap:6px;align-content:start}
+.pkg:hover{border-color:var(--accent)}
+.pkg[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:var(--accent-soft)}
+.pkg .pn{font-weight:700;font-size:16px}
+.pkg .pd{font-size:13px;color:var(--muted);min-height:2.6em}
+.pkg .pp{font-family:var(--f-num);font-size:15px;font-weight:600}
+.pkg .pp small{font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:12px}
+.pkg .badge{position:absolute;top:-9px;right:12px;font-size:11px;font-weight:600;background:var(--accent);color:var(--accent-fg);padding:2px 8px;border-radius:999px}
+
+.reasons{background:var(--surface-2);border-radius:var(--r);padding:16px 18px;display:grid;gap:10px}
+.rep-h{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.rep-h span:last-child{letter-spacing:0;text-transform:none;font-family:var(--f-num);color:var(--accent)}
+.rx{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.3fr);gap:10px;align-items:center;font-size:14px;padding-top:9px;border-top:1px solid var(--line)}
+.rx .in{color:var(--muted)}
+.rx .arrow{color:var(--accent);font-family:var(--f-num)}
+.rx .out{font-weight:600}
+@media (max-width:560px){.rx{grid-template-columns:minmax(0,1fr);gap:2px}.rx .arrow{display:none}}
+
+/* items */
+.cat{display:grid;gap:0}
+.cat-h{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto 118px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.row.off .rn,.row.off .rd{opacity:.55}
+.rn{font-weight:600;font-size:14.5px}
+.rd{font-size:13px;color:var(--muted)}
+.rp{font-family:var(--f-num);font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
+.ctl{justify-self:end}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stepper button{width:32px;height:32px;border:0;background:transparent;cursor:pointer;font-size:16px}
+.stepper button:hover{background:var(--accent-soft)}
+.stepper output{min-width:42px;text-align:center;font-family:var(--f-num);font-size:14px}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--muted)}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
+@media (max-width:560px){.row{grid-template-columns:minmax(0,1fr) auto}.rp{grid-column:1;text-align:left}.ctl{grid-row:1/3;grid-column:2;align-self:center}}
+
+/* summary */
+.sum{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:grid;gap:14px}
+.sum-plan{font-size:13px;color:var(--muted)}
+.sum-plan b{display:block;color:var(--fg);font-size:17px;margin-top:2px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:8px 0;font-size:13px;cursor:pointer;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.seg button small{display:block;font-size:10.5px;opacity:.8}
+.lines{display:grid;gap:7px;font-size:13.5px}
+.line{display:flex;justify-content:space-between;gap:10px}
+.line span:first-child{color:var(--muted)}
+.line .neg{color:var(--good)}
+.hr{height:1px;background:var(--line)}
+.total{display:grid;gap:2px}
+.total span{font-size:13px;color:var(--muted)}
+.total strong{font-family:var(--f-num);font-size:28px;font-weight:700;letter-spacing:-.01em}
+.stat{display:flex;gap:10px}
+.stat div{flex:1;background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.stat small{display:block;font-size:11.5px;color:var(--muted)}
+.stat b{font-family:var(--f-num);font-size:17px}
+.fine{font-size:12px;color:var(--muted);margin:0}
+
+/* client form */
+.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.fields{grid-template-columns:minmax(0,1fr)}}
+.field{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.field input{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--fg);font:inherit;font-size:14px;min-width:0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toast{font-size:13px;color:var(--good)}
+.qwrap{overflow-x:auto;border-radius:var(--r);background:#E3E8F2;padding:20px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+<style id="qcss">
+.qpaper{width:794px;margin:0 auto;background:#FFFFFF;color:#121A33;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:13px;line-height:1.6;padding:48px 52px;box-shadow:0 2px 14px rgba(10,19,48,.12);font-variant-numeric:tabular-nums}
+.qpaper *{box-sizing:border-box}
+.q-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0A1330;padding-bottom:18px}
+.q-brand{font-weight:700;font-size:16px;color:#0A1330}
+.q-brand small{font-size:10px;opacity:.5;margin:0 2px}
+.q-brand div{font-weight:400;font-size:11px;color:#5B6890;margin-top:2px}
+.q-title{text-align:right}
+.q-title h1{font-size:24px;margin:0;letter-spacing:.3em;color:#0A1330}
+.q-title div{font-size:11px;color:#5B6890;letter-spacing:.04em}
+.q-meta{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:22px}
+.q-to b{font-size:18px}
+.q-to p{margin:4px 0 0;color:#5B6890}
+.q-kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:12px}
+.q-kv dt{color:#5B6890}
+.q-kv dd{margin:0;text-align:right}
+.q-hero{margin-top:22px;background:#0A1330;color:#FFFFFF;border-radius:6px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.q-hero small{display:block;font-size:11px;opacity:.7}
+.q-hero b{font-size:16px}
+.q-hero .amt{text-align:right}
+.q-hero .amt b{font-size:22px}
+.q-sec{margin-top:24px}
+.q-sec h3{font-size:12px;letter-spacing:.14em;color:#2963E8;margin:0 0 8px;font-weight:700}
+.q-diag{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.q-diag div{background:#F2F5FB;border-radius:4px;padding:8px 10px;font-size:12px}
+.q-diag small{display:block;color:#5B6890;font-size:10.5px}
+.q-table{width:100%;border-collapse:collapse;font-size:12px}
+.q-table th{text-align:left;font-weight:600;color:#5B6890;font-size:11px;border-bottom:1px solid #0A1330;padding:6px 6px}
+.q-table td{border-bottom:1px solid #E1E6F0;padding:7px 6px;vertical-align:top}
+.q-table td.r,.q-table th.r{text-align:right}
+.q-table td.m{white-space:nowrap}
+.q-table td small{display:block;color:#7883A3;font-size:10.5px}
+.q-table .grp td{background:#F2F5FB;font-weight:600;font-size:11px;color:#0A1330}
+.q-table s{color:#9AA3BC}
+.q-totals{margin-left:auto;width:330px;margin-top:10px;font-size:12.5px}
+.q-totals div{display:flex;justify-content:space-between;padding:4px 6px}
+.q-totals .g{color:#178A5A}
+.q-totals .t{border-top:2px solid #0A1330;margin-top:4px;padding-top:8px;font-weight:700;font-size:15px}
+.q-two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.q-list{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+.q-list li{display:grid;grid-template-columns:66px 1fr;gap:8px;font-size:12px}
+.q-list li b{color:#2963E8;font-weight:600}
+.q-qs{margin:0;padding:0;list-style:none;display:grid;gap:5px}
+.q-qs li{background:#F2F5FB;border-radius:4px;padding:6px 10px;font-size:12px}
+.q-why{margin:0;padding-left:16px;font-size:12px;display:grid;gap:2px}
+.q-note{margin-top:24px;border-top:1px solid #E1E6F0;padding-top:12px;font-size:11px;color:#5B6890;display:grid;gap:2px}
+.q-foot{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;color:#5B6890}
+.q-foot b{color:#0A1330;font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="wrap appbar-in">
+    <div class="brand">STEP UP <small>by</small> AI <span class="app">Media Planner</span></div>
+    <div class="modes" role="group" aria-label="화면 모드">
+      <button type="button" data-mode="full">전체 모드</button>
+      <button type="button" data-mode="present">발표 모드</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="session" aria-label="상담 세션">
+    <div class="session-h"><span class="dot"></span>상담 세션 <span class="num" id="sessNo"></span><span class="sess-date" id="sessDate"></span></div>
+    <div class="fields">
+      <label class="field">고객사<input id="cName" placeholder="예: 한빛에듀" autocomplete="off"></label>
+      <label class="field">고객 담당자<input id="cPerson" placeholder="예: 김OO 대표" autocomplete="off"></label>
+      <label class="field">제안 담당<input id="cOwner" value="서진욱" autocomplete="off"></label>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="steps">
+      <!-- 01 진단 -->
+      <section class="step" id="s1">
+        <div class="step-h"><span class="step-no">01</span><div><h2>브랜드 진단</h2><p>5개 질문으로 출발점을 정합니다.</p></div></div>
+        <div class="q"><div class="q-label">업종</div><div class="chips" data-q="industry"></div></div>
+        <div class="q"><div class="q-label">이번 캠페인의 목표 <span>여러 개 선택 가능</span></div><div class="chips" data-q="goals"></div></div>
+        <div class="q"><div class="q-label">현재 콘텐츠 상황</div><div class="chips" data-q="stage"></div></div>
+        <div class="q"><div class="q-label">월 마케팅 예산</div><div class="chips" data-q="budget"></div></div>
+        <div class="q"><div class="q-label">운영 기간 <span>길수록 기간 할인이 커집니다</span></div><div class="chips" data-q="months"></div></div>
+        <button class="primary" id="btnRecommend" type="button">진단 결과로 프로그램 처방하기 →</button>
+      </section>
+
+      <!-- 02 구성 -->
+      <section class="step" id="s2">
+        <div class="step-h"><span class="step-no">02</span><div><h2>프로그램 구성</h2><p>진단 결과에 따라 처방된 구성입니다. 수량을 바꾸면 금액이 바로 다시 계산됩니다.</p></div></div>
+        <div class="pkgs" id="pkgs"></div>
+        <div class="reasons" id="reasons"></div>
+        <div id="items" style="display:grid;gap:22px"></div>
+      </section>
+
+      <!-- 03 견적서 -->
+      <section class="step" id="s3">
+        <div class="step-h"><span class="step-no">03</span><div><h2>미디어 플랜 발행</h2><p>고객에게는 이 미디어 플랜만 전달합니다.</p></div></div>
+        <div class="actions">
+          <button class="primary" id="btnPng" type="button" hidden>미디어 플랜 이미지 저장 (PNG)</button>
+          <button class="ghost" id="btnHtml" type="button">인쇄용 파일 저장 (HTML)</button>
+          <button class="ghost" id="btnCopy" type="button">플랜 요약 복사</button>
+          <span class="toast" id="toast" role="status"></span>
+        </div>
+        <div class="qwrap"><div class="qpaper" id="quote"></div></div>
+      </section>
+    </div>
+
+    <aside class="sum" aria-label="미디어 플랜 요약">
+      <div class="sum-plan">선택한 프로그램<b id="sPlan">Growth</b></div>
+      <div class="seg" id="sSeg"></div>
+      <div class="lines" id="sLines"></div>
+      <div class="hr"></div>
+      <div class="total"><span>총 집행금액 (VAT 포함)</span><strong class="num" id="sTotal">0원</strong></div>
+      <div class="stat">
+        <div><small>월 발행 콘텐츠</small><b id="sCount">0건</b></div>
+        <div><small>계약 기간 총 발행</small><b id="sCountAll">0건</b></div>
+      </div>
+      <button class="primary" id="btnPng2" type="button" hidden style="justify-self:stretch">미디어 플랜 이미지 저장</button>
+      <button class="ghost" type="button" onclick="document.getElementById('s3').scrollIntoView()">미디어 플랜 미리보기 ↓</button>
+      <p class="fine">표시 단가는 VAT 별도 기준입니다. 패키지를 선택하면 AI 검색 노출 진단이 무상으로 포함됩니다.</p>
+    </aside>
+  </div>
+</main>
+
+<script>
+/* ===== 단가표: 가격·할인은 여기만 고치면 전체에 반영됩니다 (VAT 별도, 원) ===== */
+const CATALOG = [
+  {id:'audit',  cat:'초기 세팅', name:'AI 검색 노출 진단', desc:'타깃 질문 30개 기준 현재 노출 현황·경쟁사 비교 리포트', unit:'1회', price:500000, type:'setup'},
+  {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'스키마 마크업·FAQ 구조·llms.txt 적용', unit:'1회', price:800000, type:'setup'},
+  {id:'blog',   cat:'블로그·SNS', name:'블로그 포스팅', desc:'검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', max:50, step:5, content:true},
+  {id:'insta',  cat:'블로그·SNS', name:'인스타그램 운영', desc:'주 3회, 월 12건 (릴스 2건 포함)', unit:'식', price:1000000, type:'monthly', max:1, per:12, content:true},
+  {id:'threads',cat:'블로그·SNS', name:'스레드 운영', desc:'월 30건 포스팅', unit:'식', price:500000, type:'monthly', max:1, per:30, content:true},
+  {id:'youtube',cat:'영상', name:'롱폼 영상 (유튜브)', desc:'기획·촬영·편집·채널 운영, 월 4편 (10분 내외)', unit:'식', price:4000000, type:'monthly', max:1, per:4, content:true},
+  {id:'shorts', cat:'영상', name:'숏폼 묶음', desc:'인스타 릴스·유튜브 쇼츠·틱톡 동시 배포, 1분 이하', unit:'식', price:1500000, type:'monthly', max:1},
+  {id:'faq',    cat:'GEO 콘텐츠', name:'AI 답변용 Q&A 콘텐츠', desc:'타깃 질문별 정답형 콘텐츠 제작·배포', unit:'건', price:100000, type:'monthly', max:30, content:true},
+  {id:'card',   cat:'GEO 콘텐츠', name:'기사 카드뉴스 재가공', desc:'기사 1편을 카드뉴스 8장 + 스레드 포스팅 5개로', unit:'세트', price:120000, type:'monthly', max:8, content:true},
+  {id:'brand',  cat:'언론 노출', name:'대한청년일보 브랜드 인터뷰 기사', desc:'대표 인터뷰 기반 기사 작성·게재', unit:'건', price:700000, type:'monthly', max:4, content:true},
+  {id:'column', cat:'언론 노출', name:'전문가 칼럼 연재', desc:'대표 명의 칼럼 기획·작성·게재', unit:'편', price:350000, type:'monthly', max:4, content:true},
+  {id:'press',  cat:'언론 노출', name:'보도자료 작성·송출', desc:'사실기사 형식으로 작성해 대한청년일보에 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
+  {id:'syndi',  cat:'언론 노출', name:'제휴 언론사 동시 송출', desc:'게재 기사를 제휴 매체에 추가 송출', unit:'건', price:200000, type:'monthly', max:8},
+  {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
+  {id:'legal',  cat:'관리·리포트', name:'광고 표현 법적 검토', desc:'의료·식품·금융 과장 표현, 표시광고법 점검', unit:'월', price:200000, type:'monthly', max:1},
+];
+const PACKAGES = {
+  starter:{name:'Starter', desc:'블로그와 스레드로 검색에 잡히는 기본기를 쌓습니다', items:{blog:25,threads:1,press:1,report:1}, setup:['audit']},
+  growth: {name:'Growth', desc:'SNS와 언론 노출을 함께 늘려 AI가 인용할 근거를 만듭니다', items:{blog:25,insta:1,threads:1,faq:8,brand:1,column:1,report:1}, setup:['audit','schema'], badge:'추천'},
+  premium:{name:'Premium', desc:'영상까지 더해 업계 대표 브랜드로 자리잡습니다', items:{blog:25,insta:1,threads:1,youtube:1,shorts:1,faq:12,brand:1,column:2,press:2,syndi:2,report:1}, setup:['audit','schema']},
+};
+const PERIODS = [{m:1,r:0},{m:3,r:.05},{m:6,r:.10},{m:12,r:.15}];
+const VAT = 0.1, VALID_DAYS = 14;
+
+/* ===== 진단 문항 ===== */
+const Q = {
+  industry:{multi:false, opts:[['medical','병원·의료'],['pro','법률·세무·전문직'],['edu','교육·강의'],['commerce','뷰티·식품·커머스'],['b2b','B2B·IT'],['local','프랜차이즈·로컬'],['etc','기타']]},
+  goals:{multi:true, opts:[['ai','AI 답변에 브랜드 노출'],['trust','언론 노출로 신뢰 확보'],['lead','검색 유입·문의 증가'],['expert','대표 전문가 포지셔닝'],['video','영상으로 브랜드 알리기']]},
+  stage:{multi:false, opts:[['none','콘텐츠가 거의 없음'],['blog','블로그·SNS 운영 중'],['press','기사·언론 노출 경험 있음']]},
+  budget:{multi:false, opts:[['low','월 300만 원 미만'],['mid','월 300~700만 원'],['high','월 700만 원 이상']]},
+  months:{multi:false, opts:PERIODS.map(p=>[String(p.m), p.m+'개월', p.r?'−'+Math.round(p.r*100)+'%':''])},
+};
+const QUESTIONS = {
+  medical:['[지역] [진료과목] 잘하는 병원 추천해줘','[시술명] 부작용 적은 병원은 어디야?','[병원명] 원장님 경력이 어떻게 돼?'],
+  pro:['[지역] 상속 전문 세무사 추천해줘','[분야] 소송 경험 많은 변호사는 누구야?','[사무소명]은 믿을 만한 곳이야?'],
+  edu:['[분야] 강의 잘하는 강사 추천해줘','[주제]로 기업 강연 섭외할 만한 사람은?','[강사명]은 어떤 강의를 해?'],
+  commerce:['[카테고리] 가성비 좋은 브랜드 추천해줘','[제품군] 성분 괜찮은 제품 뭐가 있어?','[브랜드명] 실제 후기는 어때?'],
+  b2b:['[업무] 자동화 솔루션 추천해줘','[분야] 국내 대표 기업은 어디야?','[회사명]은 어떤 서비스를 하는 회사야?'],
+  local:['[지역] [업종] 매장 추천해줘','[브랜드] 가맹 조건은 괜찮아?','[지역]에서 [업종] 창업하려면 어디가 좋아?'],
+  etc:['[분야] 잘하는 곳 추천해줘','[고민]을 해결하려면 어떤 서비스를 써야 해?','[브랜드명]은 믿을 만해?'],
+};
+
+/* ===== 상태 (처음 열면 예시 진단으로 채워진 상태) ===== */
+const S = {
+  industry:'edu', goals:new Set(['ai','expert']), stage:'blog', budget:'mid', months:6,
+  pkg:'growth', modified:false, qty:{}, setup:{}, reasons:[],
+};
+const byId = id => CATALOG.find(c=>c.id===id);
+const label = (q,v) => (Q[q].opts.find(o=>o[0]===String(v))||[])[1]||'';
+const fmt = n => Math.round(n).toLocaleString('ko-KR');
+const r1000 = n => Math.round(n/1000)*1000;
+const $ = id => document.getElementById(id);
+
+function loadPackage(key){
+  const p = PACKAGES[key];
+  S.pkg = key; S.modified = false; S.qty = {}; S.setup = {};
+  CATALOG.forEach(c=>{ if(c.type==='monthly') S.qty[c.id] = p.items[c.id]||0; else S.setup[c.id] = p.setup.includes(c.id); });
+}
+function recommend(){
+  const key = {low:'starter', mid:'growth', high:'premium'}[S.budget];
+  loadPackage(key);
+  const why = [`${label('budget',S.budget)} 예산 → ${PACKAGES[key].name} 플랜`];
+  if(S.goals.has('expert')){ const n = key==='premium'?2:1; if(S.qty.column<n){S.qty.column=n;} why.push('대표 전문가 포지셔닝 → 전문가 칼럼 월 '+S.qty.column+'편'); }
+  if(S.goals.has('trust') && S.qty.brand<1){ S.qty.brand=1; why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 추가'); }
+  else if(S.goals.has('trust')) why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 포함');
+  if(S.goals.has('lead')){ if(!S.qty.insta){ S.qty.insta = 1; why.push('검색 유입·문의 확대 → 인스타그램 운영 추가'); } else why.push('검색 유입·문의 확대 → 블로그 월 25건 + 인스타그램으로 접점 확보'); }
+  if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push('영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포'); }
+  if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
+  if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
+  if(S.stage==='press') why.push('기존 기사 보유 → 제휴 송출로 노출 범위 확대');
+  if(S.industry==='medical' || S.industry==='commerce'){ S.qty.legal = 1; why.push(label('industry',S.industry)+' 업종 → 광고 표현 법적 검토 포함'); }
+  S.reasons = why;
+}
+
+function calc(){
+  const rate = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
+  const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, q:S.qty[c.id], amt:c.price*S.qty[c.id]}));
+  const setup = CATALOG.filter(c=>c.type==='setup' && S.setup[c.id]).map(c=>({...c, q:1, amt:c.price, free: c.id==='audit' && S.pkg!=='custom'}));
+  const mList = monthly.reduce((a,c)=>a+c.amt,0);
+  const mDisc = r1000(mList*rate);
+  const mNet = mList - mDisc;
+  const sList = setup.reduce((a,c)=>a+c.amt,0);
+  const sFree = setup.filter(c=>c.free).reduce((a,c)=>a+c.amt,0);
+  const sNet = sList - sFree;
+  const supply = mNet*S.months + sNet;
+  const vat = Math.round(supply*VAT);
+  const count = monthly.filter(c=>c.content).reduce((a,c)=>a+c.q*(c.per||1),0);
+  return {rate, monthly, setup, mList, mDisc, mNet, sList, sFree, sNet, supply, vat, total:supply+vat, count, list:mList*S.months+sList};
+}
+function planName(){ return PACKAGES[S.pkg].name + (S.modified ? ' 기반 맞춤' : ''); }
+
+/* ===== 화면 만들기 ===== */
+function buildChips(){
+  document.querySelectorAll('.chips').forEach(box=>{
+    const q = box.dataset.q;
+    box.innerHTML = Q[q].opts.map(o=>`<button type="button" class="chip" data-v="${o[0]}">${o[1]}${o[2]?`<em>${o[2]}</em>`:''}</button>`).join('');
+    box.addEventListener('click', e=>{
+      const b = e.target.closest('.chip'); if(!b) return;
+      const v = b.dataset.v;
+      if(q==='goals'){ S.goals.has(v) ? S.goals.delete(v) : S.goals.add(v); }
+      else S[q] = q==='months' ? Number(v) : v;
+      render();
+    });
+  });
+  $('sSeg').innerHTML = PERIODS.map(p=>`<button type="button" data-m="${p.m}">${p.m}개월<small>${p.r?'−'+Math.round(p.r*100)+'%':'기본'}</small></button>`).join('');
+  $('sSeg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; S.months=Number(b.dataset.m); render(); });
+}
+function buildPackages(){
+  $('pkgs').innerHTML = Object.entries(PACKAGES).map(([k,p])=>{
+    const m = CATALOG.reduce((a,c)=>a+(p.items[c.id]||0)*c.price,0);
+    return `<button type="button" class="pkg" data-k="${k}">${p.badge?`<span class="badge">${p.badge}</span>`:''}
+      <span class="pn">${p.name}</span><span class="pd">${p.desc}</span>
+      <span class="pp">월 ${fmt(m/10000)}만 원<small> 부터 · VAT 별도</small></span></button>`;
+  }).join('');
+  $('pkgs').addEventListener('click', e=>{
+    const b = e.target.closest('.pkg'); if(!b) return;
+    loadPackage(b.dataset.k); S.reasons = ['직접 선택 → '+PACKAGES[b.dataset.k].name+' 플랜 기본 구성']; render();
+  });
+}
+function buildItems(){
+  const cats = [...new Set(CATALOG.map(c=>c.cat))];
+  $('items').innerHTML = cats.map(cat=>`<div class="cat"><div class="cat-h">${cat}</div>${
+    CATALOG.filter(c=>c.cat===cat).map(c=>`<div class="row" data-id="${c.id}">
+      <div><div class="rn">${c.name}</div><div class="rd">${c.desc}</div></div>
+      <div class="rp">${fmt(c.price)}원 / ${c.unit}</div>
+      <div class="ctl">${c.type==='setup'
+        ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> 포함</label>`
+        : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
+    </div>`).join('')}</div>`).join('');
+  $('items').addEventListener('click', e=>{
+    const b = e.target.closest('button[data-d]'); if(!b) return;
+    const id = b.closest('.row').dataset.id, c = byId(id);
+    S.qty[id] = Math.max(0, Math.min(c.max, (S.qty[id]||0) + Number(b.dataset.d)*(c.step||1)));
+    S.modified = true; render();
+  });
+  $('items').addEventListener('change', e=>{
+    if(e.target.type!=='checkbox') return;
+    S.setup[e.target.closest('.row').dataset.id] = e.target.checked; S.modified = true; render();
+  });
+}
+
+function render(){
+  // 진단 칩 상태
+  document.querySelectorAll('.chips').forEach(box=>{
+    const q = box.dataset.q;
+    box.querySelectorAll('.chip').forEach(b=>{
+      const v = b.dataset.v;
+      b.setAttribute('aria-pressed', q==='goals' ? S.goals.has(v) : String(S[q])===v);
+    });
+  });
+  document.querySelectorAll('#sSeg button').forEach(b=>b.setAttribute('aria-pressed', Number(b.dataset.m)===S.months));
+  document.querySelectorAll('.pkg').forEach(b=>b.setAttribute('aria-pressed', b.dataset.k===S.pkg));
+  $('reasons').innerHTML = `<div class="rep-h"><span>Diagnosis Report</span><span>처방 ${S.reasons.length}건</span></div>` +
+    S.reasons.map(r=>{ const [a,b] = r.split(' → '); return `<div class="rx"><span class="in">${a}</span><span class="arrow">→</span><span class="out">${b||''}</span></div>`; }).join('');
+  CATALOG.forEach(c=>{
+    const row = document.querySelector(`.row[data-id="${c.id}"]`);
+    if(c.type==='setup'){ $('chk-'+c.id).checked = !!S.setup[c.id]; row.classList.toggle('off', !S.setup[c.id]); }
+    else { $('q-'+c.id).textContent = (S.qty[c.id]||0); row.classList.toggle('off', !S.qty[c.id]); }
+  });
+
+  const k = calc();
+  $('sPlan').textContent = planName();
+  $('sLines').innerHTML = `
+    <div class="line"><span>월 운영비 정가</span><span class="num">${fmt(k.mList)}원</span></div>
+    ${k.mDisc?`<div class="line"><span>기간 할인 ${Math.round(k.rate*100)}%</span><span class="num neg">−${fmt(k.mDisc)}원</span></div>`:''}
+    <div class="line"><span>월 운영비 × ${S.months}개월</span><span class="num">${fmt(k.mNet*S.months)}원</span></div>
+    <div class="line"><span>초기 세팅비</span><span class="num">${fmt(k.sNet)}원</span></div>
+    ${k.sFree?`<div class="line"><span>패키지 혜택 (진단 무상)</span><span class="num neg">−${fmt(k.sFree)}원</span></div>`:''}
+    <div class="line"><span>공급가액</span><span class="num">${fmt(k.supply)}원</span></div>
+    <div class="line"><span>VAT 10%</span><span class="num">${fmt(k.vat)}원</span></div>`;
+  $('sTotal').textContent = fmt(k.total)+'원';
+  $('sCount').textContent = k.count+'건';
+  $('sCountAll').textContent = (k.count*S.months)+'건';
+  renderQuote(k);
+}
+
+/* ===== 미디어 플랜 문서 ===== */
+const QNO = (()=>{ const d=new Date(); return 'SU-'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*900)+100); })();
+const dstr = d => `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}.`;
+const esc = s => String(s).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+function roadmap(k){
+  const brand = S.qty.brand>0, rows = [];
+  if(S.setup.audit) rows.push(['1주차','AI 검색 노출 진단 · 타깃 질문 30개 설계']);
+  rows.push(['2주차', S.setup.schema ? '구조화 데이터 세팅 · 콘텐츠 캘린더 확정' : '콘텐츠 캘린더 확정 · 브랜드 메시지 정리']);
+  rows.push(['3주차~', `월 ${k.count}건 콘텐츠 발행 시작`+(brand?' · 대표 인터뷰 진행':'')]);
+  rows.push(['매월 말', S.qty.report ? 'AI 노출 리포트 · 다음 달 질문 세트 조정' : '월간 발행 결과 공유']);
+  if(S.months>1) rows.push([S.months+'개월 차','전체 성과 리뷰 · 다음 단계 전략 제안']);
+  return rows;
+}
+function renderQuote(k){
+  const client = $('cName').value.trim(), person = $('cPerson').value.trim(), owner = $('cOwner').value.trim();
+  const today = new Date(), until = new Date(today.getTime()+VALID_DAYS*864e5);
+  const goals = [...S.goals].map(g=>label('goals',g)).join(', ') || '미선택';
+  const mRows = k.monthly.map(c=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">${c.q}${c.unit}/월</td><td class="r m">${fmt(c.amt)}</td></tr>`).join('');
+  const sRows = k.setup.map(c=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">1회</td><td class="r m">${c.free?`<s>${fmt(c.amt)}</s> 0`:fmt(c.amt)}</td></tr>`).join('');
+  $('quote').innerHTML = `
+    <div class="q-top">
+      <div class="q-brand">STEP UP <small>by</small> AI<div>스텝업컴퍼니 × 대한청년일보</div></div>
+      <div class="q-title"><h1>미디어 플랜</h1><div>MEDIA PLAN · ${QNO}</div></div>
+    </div>
+    <div class="q-meta">
+      <div class="q-to"><b>${esc(client||'고객사')} 귀하</b><p>${person?esc(person)+' 님께 · ':''}브랜드 진단 결과에 따른 GEO 미디어 플랜을 제안드립니다.</p></div>
+      <dl class="q-kv"><dt>작성일</dt><dd>${dstr(today)}</dd><dt>유효기간</dt><dd>${dstr(until)}까지</dd><dt>계약 기간</dt><dd>${S.months}개월</dd>${owner?`<dt>제안 담당</dt><dd>${esc(owner)}</dd>`:''}</dl>
+    </div>
+    <div class="q-hero"><div><small>제안 미디어 플랜</small><b>${esc(client||'브랜드')} GEO 미디어 플랜 · ${planName()}</b></div><div class="amt"><small>총 집행금액 (VAT 포함)</small><b>${fmt(k.total)}원</b></div></div>
+    <div class="q-sec"><h3>DIAGNOSIS</h3><div class="q-diag">
+      <div><small>업종</small>${label('industry',S.industry)}</div>
+      <div><small>현재 상황</small>${label('stage',S.stage)}</div>
+      <div><small>예산 범위</small>${label('budget',S.budget)}</div>
+      <div><small>월 발행량</small>${k.count}건 (총 ${k.count*S.months}건)</div>
+    </div><p style="margin:8px 0 0;font-size:12px"><span style="color:#5B6890">목표</span> ${goals}</p></div>
+    <div class="q-sec"><h3>PROGRAM DETAIL</h3>
+      <table class="q-table"><thead><tr><th>항목</th><th class="r">단가</th><th class="r">수량</th><th class="r">금액(원)</th></tr></thead><tbody>
+        ${mRows?`<tr class="grp"><td colspan="4">월 운영 항목 (매월 반복)</td></tr>${mRows}`:''}
+        ${sRows?`<tr class="grp"><td colspan="4">초기 세팅 항목 (1회)</td></tr>${sRows}`:''}
+      </tbody></table>
+      <div class="q-totals">
+        <div><span>월 운영비 소계</span><span>${fmt(k.mList)}</span></div>
+        ${k.mDisc?`<div class="g"><span>${S.months}개월 약정 할인 ${Math.round(k.rate*100)}%</span><span>−${fmt(k.mDisc)}</span></div>`:''}
+        <div><span>월 운영비 × ${S.months}개월</span><span>${fmt(k.mNet*S.months)}</span></div>
+        <div><span>초기 세팅비</span><span>${fmt(k.sNet)}</span></div>
+        <div><span>공급가액</span><span>${fmt(k.supply)}</span></div>
+        <div><span>부가세 (10%)</span><span>${fmt(k.vat)}</span></div>
+        <div class="t"><span>합계</span><span>${fmt(k.total)}원</span></div>
+        ${k.list > k.supply?`<div class="g" style="font-size:11.5px"><span>정가 대비 절감액</span><span>${fmt(k.list-k.supply)}원</span></div>`:''}
+      </div>
+    </div>
+    <div class="q-sec q-two">
+      <div><h3>ROADMAP</h3><ul class="q-list">${roadmap(k).map(r=>`<li><b>${r[0]}</b><span>${r[1]}</span></li>`).join('')}</ul></div>
+      <div><h3>TARGET AI QUESTIONS</h3><ul class="q-qs">${QUESTIONS[S.industry].map(q=>`<li>“${q}”</li>`).join('')}</ul>
+        <p style="margin:6px 0 0;font-size:11px;color:#5B6890">진단 단계에서 실제 브랜드 기준 질문 30개로 확정합니다.</p></div>
+    </div>
+    <div class="q-sec"><h3>WHY THIS PLAN</h3><ul class="q-why">${S.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>
+    <div class="q-note">
+      <div>· 모든 단가는 VAT 별도 기준이며, 합계 금액은 VAT 포함입니다.</div>
+      <div>· 월 운영비는 매월 청구되며, 초기 세팅비는 착수 시 1회 청구됩니다.</div>
+      <div>· 기사 게재 일정과 내용은 언론사 편집 기준에 따라 조정될 수 있습니다.</div>
+      <div>· 본 미디어 플랜의 금액은 작성일로부터 ${VALID_DAYS}일간 유효합니다.</div>
+    </div>
+    <div class="q-foot"><div><b>스텝업컴퍼니</b><br>STEP UP by AI · AI 시대의 통합 마케팅</div><div>${QNO}</div></div>`;
+}
+
+/* ===== 내보내기 ===== */
+function toast(t){ $('toast').textContent = t; clearTimeout(toast.t); toast.t = setTimeout(()=>$('toast').textContent='', 4000); }
+function fileBase(){ return `스텝업_GEO미디어플랜_${($('cName').value.trim()||'고객사').replace(/[\\/:*?"<>|]/g,'')}_${QNO}`; }
+function summaryText(){
+  const k = calc(), c = $('cName').value.trim()||'고객사';
+  return [`[${c}] GEO 미디어 플랜 (${QNO})`, `플랜: ${planName()} · ${S.months}개월`, '',
+    ...k.monthly.map(i=>`- ${i.name} ${i.q}${i.unit}/월: ${fmt(i.amt)}원`),
+    ...k.setup.map(i=>`- ${i.name} (1회): ${i.free?'무상':fmt(i.amt)+'원'}`), '',
+    `월 운영비: ${fmt(k.mNet)}원${k.mDisc?` (기간 할인 ${Math.round(k.rate*100)}% 적용)`:''}`,
+    `공급가액: ${fmt(k.supply)}원 / VAT: ${fmt(k.vat)}원`, `총 집행금액: ${fmt(k.total)}원 (VAT 포함)`].join('\n');
+}
+$('btnCopy').addEventListener('click', ()=>{
+  const t = summaryText();
+  navigator.clipboard.writeText(t).then(()=>toast('플랜 요약을 복사했습니다.'), ()=>{
+    const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('플랜 요약을 복사했습니다.'); }catch(e){ toast('복사가 막혀 있습니다. 미디어 플랜 내용을 직접 선택해 복사해 주세요.'); }
+    ta.remove();
+  });
+});
+/* Claude 화면에서는 downloads 기능으로, 일반 웹(GitHub Pages)에서는 브라우저 다운로드로 저장 */
+let downloads = null;
+if(window.html2canvas){ $('btnPng').hidden = false; $('btnPng2').hidden = false; }
+(async()=>{
+  try{ downloads = window.claude ? await window.claude.use('downloads') : null; }catch(e){ downloads = null; }
+})();
+async function save(filename, data){
+  if(!downloads){
+    const blob = data instanceof Blob ? data : new Blob([data], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    toast('저장했습니다.'); return;
+  }
+  try{ await downloads.save({filename, data}); toast('저장했습니다.'); }
+  catch(e){ toast(e && e.code==='declined' ? '저장을 취소했습니다.' : '이 화면에서는 저장할 수 없습니다.'); }
+}
+async function savePng(){
+  toast('이미지를 만드는 중입니다…');
+  try{ await document.fonts.ready; }catch(e){}
+  const canvas = await html2canvas($('quote'), {scale:2, backgroundColor:'#FFFFFF'});
+  canvas.toBlob(b=>save(fileBase()+'.png', b), 'image/png');
+}
+$('btnPng').addEventListener('click', savePng);
+$('btnPng2').addEventListener('click', savePng);
+$('btnHtml').addEventListener('click', ()=>{
+  const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${fileBase()}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>body{margin:0;background:#E3E8F2;padding:24px}@media print{body{background:#fff;padding:0}.qpaper{box-shadow:none}}${$('qcss').textContent}</style></head><body>${$('quote').outerHTML}</body></html>`;
+  save(fileBase()+'.html', html);
+});
+['cName','cPerson','cOwner'].forEach(id=>$(id).addEventListener('input', ()=>renderQuote(calc())));
+$('btnRecommend').addEventListener('click', ()=>{ recommend(); render(); $('s2').scrollIntoView(); });
+
+function setMode(m){
+  document.body.classList.toggle('present', m==='present');
+  document.querySelectorAll('.modes button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.mode===m));
+  try{ localStorage.setItem('geoPlannerMode', m); }catch(e){}
+}
+document.querySelector('.modes').addEventListener('click', e=>{ const b = e.target.closest('button'); if(b) setMode(b.dataset.mode); });
+let savedMode = 'full'; try{ savedMode = localStorage.getItem('geoPlannerMode') || 'full'; }catch(e){}
+setMode(savedMode);
+$('sessNo').textContent = QNO; $('sessDate').textContent = dstr(new Date());
+
+buildChips(); buildPackages(); buildItems(); recommend(); render();
+</script>
+</body>
+</html>
