@@ -78,6 +78,13 @@ body.present .rp{display:none}
 .chip:hover{border-color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .chip em{font-style:normal;font-size:12px;opacity:.75;margin-left:4px}
+.ind{background:var(--surface-2);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;font-size:13.5px}
+.ind-r{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:baseline}
+.ind-r>span:first-child{font-size:12px;color:var(--muted);font-weight:600}
+.ind .tags{display:flex;flex-wrap:wrap;gap:6px}
+.ind .tags b{font-weight:600;font-size:12.5px;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 8px}
+.ind .warn{color:var(--warn)}
+@media (max-width:560px){.ind-r{grid-template-columns:minmax(0,1fr);gap:2px}}
 .primary{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:12px 20px;font-weight:600;cursor:pointer;justify-self:start}
 .primary:hover{filter:brightness(1.08)}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-weight:500;cursor:pointer}
@@ -233,7 +240,8 @@ html{scroll-behavior:smooth}
       <!-- 01 진단 -->
       <section class="step" id="s1">
         <div class="step-h"><span class="step-no">01</span><div><h2>브랜드 진단</h2><p>5개 질문으로 출발점을 정합니다.</p></div></div>
-        <div class="q"><div class="q-label">업종</div><div class="chips" data-q="industry"></div></div>
+        <div class="q"><div class="q-label">업종 <span>업종에 따라 채널 구성과 체크포인트가 달라집니다</span></div><div class="chips" data-q="industry"></div>
+          <div class="ind" id="indCard"></div></div>
         <div class="q"><div class="q-label">이번 캠페인의 목표 <span>여러 개 선택 가능</span></div><div class="chips" data-q="goals"></div></div>
         <div class="q"><div class="q-label">현재 콘텐츠 상황</div><div class="chips" data-q="stage"></div></div>
         <div class="q"><div class="q-label">월 마케팅 예산</div><div class="chips" data-q="budget"></div></div>
@@ -314,6 +322,32 @@ const Q = {
   budget:{multi:false, opts:[['low','월 300만 원 미만'],['mid','월 300~700만 원'],['high','월 700만 원 이상']]},
   months:{multi:false, opts:PERIODS.map(p=>[String(p.m), p.m+'개월', p.r?'−'+Math.round(p.r*100)+'%':''])},
 };
+/* ===== 업종별 처방: 핵심 채널·목표 지표·체크포인트 + 구성 조정 =====
+   add: [항목id, 최소 수량, 근거, starter 제외 여부] / off: [항목id, 근거] */
+const INDUSTRY = {
+  medical:{focus:['블로그','AI 답변용 Q&A','원장 인터뷰 기사'], kpi:'“[지역] [진료과목] 병원 추천” 질문에서 AI가 추천하는 병원으로 언급',
+    caution:'의료법상 치료 경험담·전후 사진·과장 표현 제한, 의료광고 사전심의 대상 여부 확인',
+    add:[['faq',6,'환자가 묻는 시술·비용 질문 → Q&A 콘텐츠 월 6건'],['brand',1,'원장 전문성이 병원 선택 기준 → 원장 인터뷰 기사'],['legal',1,'의료광고 규제 업종 → 광고 표현 법적 검토 필수']],
+    off:[['threads','짧은 SNS보다 검색형 정보가 중요 → 스레드 대신 블로그·Q&A 집중']]},
+  pro:{focus:['대표 칼럼','블로그','AI 답변용 Q&A'], kpi:'“[분야] 전문 변호사·세무사 추천” 질문에서 대표 이름이 언급',
+    caution:'변호사·세무사 광고 규정상 승소율·최고·전문 표현 제한 여부 확인',
+    add:[['column',2,'전문가 신뢰가 곧 수임 → 대표 칼럼 월 2편'],['faq',6,'상담 전에 찾는 질문 → Q&A 콘텐츠 월 6건'],['legal',1,'전문직 광고 규정 → 광고 표현 법적 검토']],
+    off:[['insta','인스타보다 칼럼·블로그 효율이 높음 → 인스타그램 제외'],['shorts','전문직은 영상보다 글 신뢰도 우선 → 숏폼 제외']]},
+  edu:{focus:['강사 인터뷰 기사','스레드','카드뉴스'], kpi:'“[분야] 강사·강연 추천” 질문에서 강사 이름이 언급, 강의·섭외 문의 증가',
+    caution:'수강 효과·수익 보장 표현 자제, 수강생 후기는 동의받은 내용만 사용',
+    add:[['brand',1,'강사 개인 브랜드가 상품 → 강사 인터뷰 기사'],['threads',1,'팬층과 수강 대기자 형성 → 스레드 운영'],['card',2,'강의 내용을 콘텐츠로 재가공 → 카드뉴스 월 2세트']], off:[]},
+  commerce:{focus:['인스타그램','숏폼','카드뉴스'], kpi:'“[카테고리] 브랜드 추천” 질문에서 제품명이 언급, 구매 전환 증가',
+    caution:'식품·화장품 표시광고법상 효능·효과·질병 예방 표현 제한',
+    add:[['insta',1,'구매 결정이 인스타에서 일어남 → 인스타그램 운영 필수'],['shorts',1,'제품 사용 장면이 설득력 → 숏폼 묶음',true],['card',2,'제품 정보를 한눈에 → 카드뉴스 월 2세트'],['legal',1,'표시광고법 적용 업종 → 광고 표현 법적 검토 필수']], off:[]},
+  b2b:{focus:['보도자료','제휴 송출','대표 칼럼'], kpi:'“[업무] 솔루션 추천·국내 대표 기업” 질문에서 회사명이 언급, 도입 문의 증가',
+    caution:'도입 사례·고객사 로고 사용 전 고객사 동의, 수치 성과는 근거 자료 확보',
+    add:[['press',2,'도입 사례·수주 소식이 신뢰 근거 → 보도자료 월 2건'],['syndi',2,'업계 매체 노출 확대 → 제휴 송출 월 2건',true],['column',1,'의사결정자 설득 → 대표 칼럼 월 1편'],['faq',6,'솔루션 비교 질문 → Q&A 콘텐츠 월 6건']],
+    off:[['insta','의사결정자는 인스타보다 기사·검색 → 인스타그램 제외']]},
+  local:{focus:['블로그(지역 키워드)','인스타그램','보도자료'], kpi:'“[지역] [업종] 추천” 질문에서 매장명이 언급, 방문·가맹 문의 증가',
+    caution:'가맹 모집 광고는 가맹사업법상 수익 보장 표현 금지, 체험단 글은 광고 표시',
+    add:[['blog',30,'지역명 검색 경쟁이 치열 → 블로그 월 30건'],['insta',1,'방문 결정은 사진에서 → 인스타그램 운영'],['press',1,'오픈·가맹 소식 → 보도자료 월 1건']], off:[]},
+  etc:{focus:['블로그','AI 답변용 Q&A','언론 기사'], kpi:'핵심 질문에서 브랜드가 AI 답변에 언급', caution:'과장·비교 광고 표현은 사전 점검', add:[], off:[]},
+};
 const QUESTIONS = {
   medical:['[지역] [진료과목] 잘하는 병원 추천해줘','[시술명] 부작용 적은 병원은 어디야?','[병원명] 원장님 경력이 어떻게 돼?'],
   pro:['[지역] 상속 전문 세무사 추천해줘','[분야] 소송 경험 많은 변호사는 누구야?','[사무소명]은 믿을 만한 곳이야?'],
@@ -344,6 +378,9 @@ function recommend(){
   const key = {low:'starter', mid:'growth', high:'premium'}[S.budget];
   loadPackage(key);
   const why = [`${label('budget',S.budget)} 예산 → ${PACKAGES[key].name} 플랜`];
+  const ind = INDUSTRY[S.industry], tag = s => `[${label('industry',S.industry)}] `+s;
+  ind.off.forEach(([id,r])=>{ if(S.qty[id]){ S.qty[id] = 0; why.push(tag(r)); } });
+  ind.add.forEach(([id,n,r,notLow])=>{ if(notLow && key==='starter') return; if((S.qty[id]||0)<n){ S.qty[id] = n; why.push(tag(r)); } });
   if(S.goals.has('expert')){ const n = key==='premium'?2:1; if(S.qty.column<n){S.qty.column=n;} why.push('대표 전문가 포지셔닝 → 전문가 칼럼 월 '+S.qty.column+'편'); }
   if(S.goals.has('trust') && S.qty.brand<1){ S.qty.brand=1; why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 추가'); }
   else if(S.goals.has('trust')) why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 포함');
@@ -352,7 +389,6 @@ function recommend(){
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
   if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
   if(S.stage==='press') why.push('기존 기사 보유 → 제휴 송출로 노출 범위 확대');
-  if(S.industry==='medical' || S.industry==='commerce'){ S.qty.legal = 1; why.push(label('industry',S.industry)+' 업종 → 광고 표현 법적 검토 포함'); }
   S.reasons = why;
 }
 
@@ -383,6 +419,8 @@ function buildChips(){
       const v = b.dataset.v;
       if(q==='goals'){ S.goals.has(v) ? S.goals.delete(v) : S.goals.add(v); }
       else S[q] = q==='months' ? Number(v) : v;
+      // 수량을 직접 손대기 전이면 진단을 바꾸는 즉시 구성도 다시 처방
+      if(q!=='months' && !S.modified) recommend();
       render();
     });
   });
@@ -432,6 +470,11 @@ function render(){
       b.setAttribute('aria-pressed', q==='goals' ? S.goals.has(v) : String(S[q])===v);
     });
   });
+  const ind = INDUSTRY[S.industry];
+  $('indCard').innerHTML = `
+    <div class="ind-r"><span>핵심 채널</span><span class="tags">${ind.focus.map(f=>`<b>${f}</b>`).join('')}</span></div>
+    <div class="ind-r"><span>목표 지표</span><span>${ind.kpi}</span></div>
+    <div class="ind-r"><span>체크포인트</span><span class="warn">${ind.caution}</span></div>`;
   document.querySelectorAll('#sSeg button').forEach(b=>b.setAttribute('aria-pressed', Number(b.dataset.m)===S.months));
   document.querySelectorAll('.pkg').forEach(b=>b.setAttribute('aria-pressed', b.dataset.k===S.pkg));
   $('reasons').innerHTML = `<div class="rep-h"><span>Diagnosis Report</span><span>처방 ${S.reasons.length}건</span></div>` +
@@ -515,6 +558,10 @@ function renderQuote(k){
       <div><h3>TARGET AI QUESTIONS</h3><ul class="q-qs">${QUESTIONS[S.industry].map(q=>`<li>“${q}”</li>`).join('')}</ul>
         <p style="margin:6px 0 0;font-size:11px;color:#5B6890">진단 단계에서 실제 브랜드 기준 질문 30개로 확정합니다.</p></div>
     </div>
+    <div class="q-sec"><h3>INDUSTRY STRATEGY · ${label('industry',S.industry)}</h3><ul class="q-list">
+      <li><b>핵심 채널</b><span>${INDUSTRY[S.industry].focus.join(' · ')}</span></li>
+      <li><b>목표 지표</b><span>${INDUSTRY[S.industry].kpi}</span></li>
+      <li><b>체크포인트</b><span>${INDUSTRY[S.industry].caution}</span></li></ul></div>
     <div class="q-sec"><h3>WHY THIS PLAN</h3><ul class="q-why">${S.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>
     <div class="q-note">
       <div>· 모든 단가는 VAT 별도 기준이며, 합계 금액은 VAT 포함입니다.</div>
