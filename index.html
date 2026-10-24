@@ -160,7 +160,40 @@ body.present .rp{display:none}
 .toast{font-size:13px;color:var(--good)}
 .qwrap{overflow-x:auto;border-radius:var(--r);background:#E3E8F2;padding:20px}
 
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+/* 페이지 분리: 진단 화면 → (처방 로딩) → 구성·플랜 화면 */
+.flow{display:flex;align-items:center;gap:6px;margin:-8px 0 20px;flex-wrap:wrap}
+.flow button{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;font-size:13px;color:var(--muted);cursor:pointer}
+.flow button b{font-family:var(--f-num);font-weight:600;font-size:12px}
+.flow button[aria-current="step"]{border-color:var(--accent);color:var(--fg);background:var(--accent-soft)}
+.flow button[aria-current="step"] b{color:var(--accent)}
+.flow button:disabled{opacity:.45;cursor:default}
+.flow i{width:18px;height:1px;background:var(--line)}
+body.view-diag #s2,body.view-diag #s3,body.view-diag .sum{display:none}
+body.view-diag .grid{grid-template-columns:minmax(0,1fr);max-width:860px;margin-inline:auto}
+body.view-plan #s1{display:none}
+.step-h .back{margin-left:auto;align-self:center;font-size:13px;padding:7px 12px;white-space:nowrap}
+
+/* 처방 로딩 화면 */
+.rx-load{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:24px;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.rx-load[hidden]{display:none}
+.rx-card{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:30px 28px;display:grid;gap:18px;box-shadow:0 30px 80px -30px rgba(0,0,0,.6)}
+.rx-orb{width:56px;height:56px;border-radius:50%;justify-self:center;position:relative;background:radial-gradient(circle at 35% 35%,#7FB0FF,var(--accent) 60%,#1E3F9E);box-shadow:0 0 0 0 var(--accent-soft);animation:rxPulse 1.6s ease-out infinite}
+.rx-orb::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:2px solid transparent;border-top-color:var(--accent);animation:rxSpin 1s linear infinite}
+@keyframes rxPulse{0%{box-shadow:0 0 0 0 rgba(61,123,255,.45)}100%{box-shadow:0 0 0 22px rgba(61,123,255,0)}}
+@keyframes rxSpin{to{transform:rotate(360deg)}}
+.rx-card h3{text-align:center;font-size:18px}
+.rx-card .sub{text-align:center;margin:-10px 0 0;font-size:13px;color:var(--muted)}
+.rx-steps{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.rx-steps li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;align-items:start;font-size:13.5px;color:var(--muted);opacity:.45;transition:opacity .25s,color .25s}
+.rx-steps li::before{content:"";width:14px;height:14px;margin-top:4px;border-radius:50%;border:1.5px solid var(--line)}
+.rx-steps li.on{opacity:1;color:var(--fg)}
+.rx-steps li.on::before{border-color:var(--accent);border-top-color:transparent;animation:rxSpin .8s linear infinite}
+.rx-steps li.done{opacity:1;color:var(--fg)}
+.rx-steps li.done::before{content:"✓";border:0;background:var(--good);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;animation:none}
+.rx-bar{height:4px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.rx-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s ease}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.rx-orb,.rx-orb::after,.rx-steps li.on::before{animation:none}}
 html{scroll-behavior:smooth}
 </style>
 <style id="qcss">
@@ -235,6 +268,12 @@ html{scroll-behavior:smooth}
     </div>
   </section>
 
+  <nav class="flow" aria-label="진행 단계">
+    <button type="button" data-go="diag"><b>01</b>브랜드 진단</button><i></i>
+    <button type="button" data-go="plan"><b>02</b>프로그램 구성</button><i></i>
+    <button type="button" data-go="quote"><b>03</b>미디어 플랜</button>
+  </nav>
+
   <div class="grid">
     <div class="steps">
       <!-- 01 진단 -->
@@ -251,7 +290,7 @@ html{scroll-behavior:smooth}
 
       <!-- 02 구성 -->
       <section class="step" id="s2">
-        <div class="step-h"><span class="step-no">02</span><div><h2>프로그램 구성</h2><p>진단 결과에 따라 처방된 구성입니다. 수량을 바꾸면 금액이 바로 다시 계산됩니다.</p></div></div>
+        <div class="step-h"><span class="step-no">02</span><div><h2>프로그램 구성</h2><p>진단 결과에 따라 처방된 구성입니다. 수량을 바꾸면 금액이 바로 다시 계산됩니다.</p></div><button class="ghost back" type="button" data-go="diag">← 진단 수정</button></div>
         <div class="pkgs" id="pkgs"></div>
         <div class="reasons" id="reasons"></div>
         <div id="items" style="display:grid;gap:22px"></div>
@@ -281,11 +320,21 @@ html{scroll-behavior:smooth}
         <div><small>계약 기간 총 발행</small><b id="sCountAll">0건</b></div>
       </div>
       <button class="primary" id="btnPng2" type="button" hidden style="justify-self:stretch">미디어 플랜 이미지 저장</button>
-      <button class="ghost" type="button" onclick="document.getElementById('s3').scrollIntoView()">미디어 플랜 미리보기 ↓</button>
+      <button class="ghost" type="button" data-go="quote">미디어 플랜 미리보기 ↓</button>
       <p class="fine">표시 단가는 VAT 별도 기준입니다. 패키지를 선택하면 AI 검색 노출 진단이 무상으로 포함됩니다.</p>
     </aside>
   </div>
 </main>
+
+<div class="rx-load" id="rxLoad" hidden role="status" aria-live="polite">
+  <div class="rx-card">
+    <div class="rx-orb" aria-hidden="true"></div>
+    <h3>맞춤 프로그램을 설계하고 있습니다</h3>
+    <p class="sub" id="rxSub"></p>
+    <ul class="rx-steps" id="rxSteps"></ul>
+    <div class="rx-bar"><i id="rxBar"></i></div>
+  </div>
+</div>
 
 <script>
 /* ===== 단가표: 가격·할인은 여기만 고치면 전체에 반영됩니다 (VAT 별도, 원) ===== */
@@ -624,7 +673,55 @@ $('btnHtml').addEventListener('click', ()=>{
   save(fileBase()+'.html', html);
 });
 ['cName','cPerson','cOwner'].forEach(id=>$(id).addEventListener('input', ()=>renderQuote(calc())));
-$('btnRecommend').addEventListener('click', ()=>{ recommend(); render(); $('s2').scrollIntoView(); });
+/* ===== 화면 전환: 진단 → 처방 로딩 → 구성·플랜 ===== */
+let prescribed = false;
+function showView(v){
+  const plan = v!=='diag';
+  document.body.classList.toggle('view-diag', !plan);
+  document.body.classList.toggle('view-plan', plan);
+  document.querySelectorAll('.flow button').forEach(b=>{
+    const cur = v==='diag' ? 'diag' : (v==='quote' ? 'quote' : 'plan');
+    if(b.dataset.go===cur) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
+    b.disabled = b.dataset.go!=='diag' && !prescribed;
+  });
+  if(v==='quote') $('s3').scrollIntoView(); else window.scrollTo({top:0});
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-go]'); if(!b || b.disabled) return;
+  showView(b.dataset.go);
+});
+// 로딩 문구: 고객이 고른 진단 내용으로 단계별 문장을 만든다
+function loadingSteps(){
+  const goals = [...S.goals].map(g=>label('goals',g));
+  return [
+    `${label('industry',S.industry)} 업종의 핵심 채널과 고객 질문 유형을 확인하고 있어요`,
+    goals.length ? `‘${goals[0]}’${goals.length>1?` 외 ${goals.length-1}개`:''} 목표에 맞는 콘텐츠를 고르고 있어요` : '캠페인 목표에 맞는 콘텐츠를 고르고 있어요',
+    `현재 상황(${label('stage',S.stage)})에서 시작점을 잡고 있어요`,
+    `${label('budget',S.budget)} · ${S.months}개월 기준으로 구성과 금액을 맞추고 있어요`,
+    '맞춤 프로그램 처방을 정리하고 있어요'
+  ];
+}
+function runPrescribe(){
+  const steps = loadingSteps(), box = $('rxSteps'), bar = $('rxBar');
+  const quick = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const gap = quick ? 250 : 700;
+  $('rxSub').textContent = `${$('cName').value.trim() || '고객사'} · 진단 결과 5가지를 바탕으로 구성 중`;
+  box.innerHTML = steps.map(t=>`<li>${t}</li>`).join('');
+  bar.style.width = '0';
+  $('rxLoad').hidden = false; $('btnRecommend').disabled = true;
+  const lis = [...box.children];
+  lis.forEach((li,i)=>setTimeout(()=>{
+    if(i) lis[i-1].className = 'done';
+    li.className = 'on';
+    bar.style.width = ((i+1)/lis.length*100)+'%';
+  }, i*gap));
+  setTimeout(()=>{
+    lis[lis.length-1].className = 'done';
+    recommend(); render(); prescribed = true;
+    setTimeout(()=>{ $('rxLoad').hidden = true; $('btnRecommend').disabled = false; showView('plan'); }, quick ? 100 : 450);
+  }, lis.length*gap);
+}
+$('btnRecommend').addEventListener('click', runPrescribe);
 
 function setMode(m){
   document.body.classList.toggle('present', m==='present');
@@ -636,7 +733,7 @@ let savedMode = 'full'; try{ savedMode = localStorage.getItem('geoPlannerMode') 
 setMode(savedMode);
 $('sessNo').textContent = QNO; $('sessDate').textContent = dstr(new Date());
 
-buildChips(); buildPackages(); buildItems(); recommend(); render();
+buildChips(); buildPackages(); buildItems(); recommend(); render(); showView('diag');
 </script>
 </body>
 </html>
