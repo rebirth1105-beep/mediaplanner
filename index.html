@@ -56,8 +56,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .session-h .num{font-size:12.5px;color:var(--muted);font-weight:500}
 .sess-date{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:400}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
-/* 발표 모드: 화면 공유 시 항목 단가 숨김 */
-body.present .rp,body.present .ra{display:none}
+/* 발표 모드: 화면 공유 시 단가·계산식은 숨기고 항목 총액만 보여줌 */
+body.present .rp,body.present .ra em{display:none}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
 @media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
