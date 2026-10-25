@@ -393,10 +393,12 @@ const CATALOG = [
   {id:'shorts', cat:'영상', name:'숏폼 묶음', desc:'인스타 릴스·유튜브 쇼츠·틱톡 동시 배포, 1분 이하', unit:'식', price:1500000, type:'monthly', max:1},
   {id:'faq',    cat:'GEO 콘텐츠', name:'AI 답변용 Q&A 콘텐츠', desc:'타깃 질문별 정답형 콘텐츠 제작·배포', unit:'건', price:100000, type:'monthly', max:30, content:true},
   {id:'card',   cat:'GEO 콘텐츠', name:'기사 카드뉴스 재가공', desc:'기사 1편을 카드뉴스 8장 + 스레드 포스팅 5개로', unit:'세트', price:120000, type:'monthly', max:8, content:true},
-  {id:'brand',  cat:'언론 노출', name:'대한청년일보 브랜드 인터뷰 기사', desc:'대표 인터뷰 기반 기사 작성·게재', unit:'건', price:700000, type:'monthly', max:4, content:true},
-  {id:'column', cat:'언론 노출', name:'전문가 칼럼 연재', desc:'대표 명의 칼럼 기획·작성·게재', unit:'편', price:350000, type:'monthly', max:4, content:true},
-  {id:'press',  cat:'언론 노출', name:'보도자료 작성·송출', desc:'사실기사 형식으로 작성해 대한청년일보에 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
-  {id:'syndi',  cat:'언론 노출', name:'제휴 언론사 동시 송출', desc:'게재 기사를 제휴 매체에 추가 송출', unit:'건', price:200000, type:'monthly', max:8},
+  {id:'brand',  cat:'언론 노출', name:'브랜드 인터뷰 기사', desc:'대표 인터뷰 기반 기사 작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'건', price:300000, type:'monthly', max:4, content:true},
+  {id:'column', cat:'언론 노출', name:'전문가 칼럼 연재', desc:'대표 명의 칼럼 기획·작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'편', price:400000, type:'monthly', max:4, content:true},
+  // 보도자료 3단계 (회의안 15/30/45, 45만 원 이상은 메이저 언론사)
+  {id:'press',  cat:'언론 노출', name:'보도자료 · 기본', desc:'사실기사 형식 원고 작성 · 대한청년일보 게재', unit:'건', price:150000, type:'monthly', max:8, content:true},
+  {id:'pressP', cat:'언론 노출', name:'보도자료 · 제휴 매체', desc:'사실기사 형식 원고 작성 · 제휴 언론사 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
+  {id:'pressM', cat:'언론 노출', name:'보도자료 · 메이저 언론', desc:'사실기사 형식 원고 작성 · 메이저 언론사 게재', unit:'건', price:450000, type:'monthly', max:4, content:true},
   {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
   {id:'legal',  cat:'관리·리포트', name:'광고 표현 기초 점검 (AI)', desc:'의료·식품·금융 과장 표현, 표시광고법 위험 표현 1차 점검 · 전문가 법률 검토 아님', unit:'월', price:200000, type:'monthly', max:1},
 ];
@@ -411,17 +413,18 @@ const INFO = {
   shorts:{what:'1분 이하 세로 영상을 편집해 여러 플랫폼에 동시 배포합니다.', scope:['인스타 릴스·유튜브 쇼츠·틱톡 동시 업로드','자막·도입부 편집','롱폼 진행 시 롱폼 리컷 활용'], out:'월간 숏폼 업로드 목록', cases:[]},
   faq:{what:'고객이 AI에게 물어볼 질문마다, AI가 그대로 인용할 수 있는 정답형 콘텐츠를 만듭니다.', scope:['타깃 질문 선정','질문-답변형 원고 작성','홈페이지·블로그 등에 배포'], out:'질문별 콘텐츠 + 배포 위치 목록', cases:[]},
   card:{what:'게재된 기사 1편을 카드뉴스와 스레드 글로 다시 만들어 SNS로 퍼뜨립니다.', scope:['카드뉴스 8장','인스타그램 캡션','스레드 포스팅 5개'], out:'카드뉴스 이미지 + 포스팅 원고', cases:[]},
-  brand:{what:'대표 인터뷰를 바탕으로 브랜드 스토리 기사를 써서 대한청년일보에 게재합니다.', scope:['사전 질문지·인터뷰 (대면 또는 화상)','기사 작성·고객 확인','게재 및 링크 전달'], out:'게재 기사 링크', note:'게재 일정과 내용은 언론사 편집 기준에 따라 조정될 수 있습니다.', cases:[]},
-  column:{what:'대표 명의의 전문가 칼럼을 기획·작성해 연재합니다.', scope:['연재 주제 기획','초안 작성·대표 감수','게재 및 링크 전달'], out:'게재 칼럼 링크', cases:[]},
+  brand:{what:'대표 인터뷰를 바탕으로 브랜드 스토리 기사를 써서 대한청년일보에 게재하고, 200개 언론사에 함께 송출합니다.', scope:['사전 질문지·인터뷰 (대면 또는 화상)','기사 작성·고객 확인','대한청년일보 게재 + 200개 언론사 송출','게재 링크 전달'], out:'게재 기사 링크', note:'게재 일정과 내용, 송출 매체별 게재 여부는 각 언론사 편집 기준에 따라 달라질 수 있습니다.', cases:[]},
+  column:{what:'대표 명의의 전문가 칼럼을 기획·작성해 대한청년일보에 연재하고, 200개 언론사에 함께 송출합니다.', scope:['연재 주제 기획','초안 작성·대표 감수','대한청년일보 게재 + 200개 언론사 송출','게재 링크 전달'], out:'게재 칼럼 링크', note:'송출 매체별 게재 여부는 각 언론사 편집 기준에 따라 달라질 수 있습니다.', cases:[]},
   press:{what:'회사 소식을 사실 기사 형식으로 작성해 대한청년일보에 게재합니다.', scope:['소식·자료 정리','기사 작성','게재 및 링크 전달'], out:'게재 기사 링크', cases:[]},
-  syndi:{what:'게재된 기사를 제휴 언론사에 추가로 송출해 노출 범위를 넓힙니다.', scope:['제휴 매체 송출','게재 링크 취합'], out:'매체별 게재 링크', note:'송출 매체와 게재 여부는 각 매체 사정에 따라 달라질 수 있습니다.', cases:[]},
+  pressP:{what:'회사 소식을 사실 기사 형식으로 작성해 제휴 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','제휴 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'게재 매체와 일정은 매체 사정에 따라 달라질 수 있습니다.', cases:[]},
+  pressM:{what:'회사 소식을 사실 기사 형식으로 작성해 메이저 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','메이저 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'매체별 단가가 달라 매체에 따라 금액이 추가될 수 있습니다.', cases:[]},
   report:{what:'매월 같은 질문 세트로 AI 답변을 다시 확인해 변화를 추적합니다.', scope:['브랜드 언급률 추적','경쟁사 비교','다음 달 질문·콘텐츠 조정'], out:'월간 리포트', cases:[]},
   legal:{what:'AI 도구와 체크리스트로 콘텐츠 속 과장·위험 표현을 1차로 점검합니다.', scope:['의료·식품·금융 등 규제 표현 점검','표시광고법상 위험 표현 체크','수정 문구 제안'], out:'점검 결과 + 수정안', note:'변호사·심의기관 등 전문가의 법률 검토가 아닙니다. 전문 검수가 필요한 업종은 별도로 협의합니다.', cases:[]},
 };
 const PACKAGES = {
   starter:{name:'Starter', desc:'블로그와 스레드로 검색에 잡히는 기본기를 쌓습니다', items:{blog:25,threads:1,press:1,report:1}, setup:['audit']},
   growth: {name:'Growth', desc:'SNS와 언론 노출을 함께 늘려 AI가 인용할 근거를 만듭니다', items:{blog:25,insta:1,threads:1,faq:8,brand:1,column:1,report:1}, setup:['audit','schema']},
-  premium:{name:'Premium', desc:'영상까지 더해 업계 대표 브랜드로 자리잡습니다', items:{blog:25,insta:1,threads:1,youtube:1,shorts:1,faq:12,brand:1,column:2,press:2,syndi:2,report:1}, setup:['audit','schema']},
+  premium:{name:'Premium', desc:'영상까지 더해 업계 대표 브랜드로 자리잡습니다', items:{blog:25,insta:1,threads:1,youtube:1,shorts:1,faq:12,brand:1,column:2,press:1,pressM:1,report:1}, setup:['audit','schema']},
 };
 const PERIODS = [{m:1,r:0},{m:3,r:.10},{m:6,r:.20},{m:12,r:.30}];
 const VAT = 0.1, VALID_DAYS = 14;
@@ -456,9 +459,9 @@ const INDUSTRY = {
   media:{focus:['대표 칼럼','스레드','대표 인터뷰 기사'], kpi:'“[분야] 마케팅 대행사·에이전시 추천” 질문에서 회사명이 언급, 클라이언트 문의 증가',
     caution:'매출·전환율 등 성과 수치는 실제 사례 근거와 고객사 동의를 확보한 뒤 사용',
     add:[['column',2,'전문성이 곧 영업력 → 대표 칼럼 월 2편'],['threads',1,'업계 인맥·잠재 클라이언트 접점 → 스레드 운영'],['brand',1,'회사의 철학과 사례를 공식 기록으로 → 대표 인터뷰 기사']], off:[]},
-  b2b:{focus:['보도자료','제휴 송출','대표 칼럼'], kpi:'“[업무] 솔루션 추천·국내 대표 기업” 질문에서 회사명이 언급, 도입 문의 증가',
+  b2b:{focus:['보도자료','언론 송출','대표 칼럼'], kpi:'“[업무] 솔루션 추천·국내 대표 기업” 질문에서 회사명이 언급, 도입 문의 증가',
     caution:'도입 사례·고객사 로고 사용 전 고객사 동의, 수치 성과는 근거 자료 확보',
-    add:[['press',2,'도입 사례·수주 소식이 신뢰 근거 → 보도자료 월 2건'],['syndi',2,'업계 매체 노출 확대 → 제휴 송출 월 2건',true],['column',1,'의사결정자 설득 → 대표 칼럼 월 1편'],['faq',6,'솔루션 비교 질문 → Q&A 콘텐츠 월 6건']],
+    add:[['press',2,'도입 사례·수주 소식이 신뢰 근거 → 보도자료 월 2건'],['pressP',1,'업계 매체 노출 확대 → 제휴 매체 보도자료 월 1건',true],['column',1,'의사결정자 설득 → 대표 칼럼 월 1편'],['faq',6,'솔루션 비교 질문 → Q&A 콘텐츠 월 6건']],
     off:[['insta','의사결정자는 인스타보다 기사·검색 → 인스타그램 제외']]},
   local:{focus:['블로그(지역 키워드)','인스타그램','보도자료'], kpi:'“[지역] [업종] 추천” 질문에서 매장명이 언급, 방문·가맹 문의 증가',
     caution:'가맹 모집 광고는 가맹사업법상 수익 보장 표현 금지, 체험단 글은 광고 표시',
@@ -518,7 +521,7 @@ function recommend(){
   if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push('영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포'); }
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
   if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
-  if(S.stage==='press') why.push('기존 기사 보유 → 제휴 송출로 노출 범위 확대');
+  if(S.stage==='press') why.push('기존 기사 보유 → 제휴·메이저 매체 보도자료로 노출 범위 확대 가능');
   S.reasons = why;
 }
 
