@@ -144,6 +144,7 @@ body.present .rp,body.present .ra{display:none}
 .ra{font-family:var(--f-num);font-size:14px;font-weight:600;text-align:right;white-space:nowrap}
 .ra small{font-weight:400;font-size:11.5px;color:var(--muted);margin-left:2px}
 .ra s{font-weight:400;font-size:12px;color:var(--muted);margin-right:4px}
+.ra em{display:block;font-style:normal;font-weight:400;font-size:11.5px;color:var(--muted)}
 .row.off .ra{color:var(--muted);font-weight:400}
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .stepper button{width:32px;height:32px;border:0;background:transparent;cursor:pointer;font-size:16px}
@@ -644,7 +645,7 @@ function render(){
     } else {
       const q = S.qty[c.id]||0;
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
-      $('a-'+c.id).innerHTML = q ? `${fmt(c.price*q)}원<small>/월</small>` : '–';
+      $('a-'+c.id).innerHTML = q ? `${fmt(c.price*q)}원<small>/월</small><em>${fmt(c.price)}원 × ${q}${c.unit}</em>` : '–';
     }
   });
 
