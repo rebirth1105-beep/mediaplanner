@@ -553,10 +553,9 @@ function buildChips(){
 }
 function buildPackages(){
   $('pkgs').innerHTML = Object.entries(PACKAGES).map(([k,p])=>{
-    const m = CATALOG.reduce((a,c)=>a+(p.items[c.id]||0)*c.price,0);
     return `<button type="button" class="pkg" data-k="${k}"><span class="badge" hidden>진단 추천</span>
       <span class="pn">${p.name}</span><span class="pd">${p.desc}</span>
-      <span class="pp">월 ${fmt(m/10000)}만 원<small> 부터 · VAT 별도</small></span></button>`;
+      <span class="pp"></span></button>`;
   }).join('');
   $('pkgs').addEventListener('click', e=>{
     const b = e.target.closest('.pkg'); if(!b) return;
@@ -624,6 +623,10 @@ function render(){
     b.setAttribute('aria-pressed', b.dataset.k===S.pkg);
     b.classList.toggle('rec', b.dataset.k===S.rec);
     b.querySelector('.badge').hidden = b.dataset.k!==S.rec;
+    // 카드 가격도 선택한 기간 할인을 반영
+    const m = CATALOG.reduce((a,c)=>a+(PACKAGES[b.dataset.k].items[c.id]||0)*c.price,0), r = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
+    b.querySelector('.pp').innerHTML = `월 ${fmt((m-r1000(m*r))/10000)}만 원<small> 부터 · VAT 별도</small>` +
+      (r ? `<small style="display:block"><s>정가 ${fmt(m/10000)}만 원</s> · ${S.months}개월 −${Math.round(r*100)}%</small>` : '');
   });
   $('reasons').innerHTML = `<div class="rep-h"><span>Diagnosis Report</span><span>처방 ${S.reasons.length}건</span></div>` +
     S.reasons.map(r=>{ const [a,b] = r.split(' → '); return `<div class="rx"><span class="in">${a}</span><span class="arrow">→</span><span class="out">${b||''}</span></div>`; }).join('');
