@@ -171,6 +171,7 @@ body.present .rp,body.present .ra em{display:none}
 .total{display:grid;gap:2px}
 .total span{font-size:13px;color:var(--muted)}
 .total strong{font-family:var(--f-num);font-size:28px;font-weight:700;letter-spacing:-.01em}
+.total small{font-size:12px;color:var(--muted);line-height:1.5}
 .stat{display:flex;gap:10px}
 .stat div{flex:1;background:var(--surface-2);border-radius:8px;padding:10px 12px}
 .stat small{display:block;font-size:11.5px;color:var(--muted)}
@@ -355,7 +356,7 @@ html{scroll-behavior:smooth}
       <div class="seg" id="sSeg"></div>
       <div class="lines" id="sLines"></div>
       <div class="hr"></div>
-      <div class="total"><span>총 집행금액 (VAT 포함)</span><strong class="num" id="sTotal">0원</strong></div>
+      <div class="total"><span>월 집행금액 (VAT 별도)</span><strong class="num" id="sTotal">0원</strong><small class="num" id="sTotalSub"></small></div>
       <div class="stat">
         <div><small>월 발행 콘텐츠</small><b id="sCount">0건</b></div>
         <div><small>계약 기간 총 발행</small><b id="sCountAll">0건</b></div>
@@ -662,7 +663,9 @@ function render(){
     ${k.sFree?`<div class="line"><span>패키지 혜택 (진단 무상)</span><span class="num neg">−${fmt(k.sFree)}원</span></div>`:''}
     <div class="line"><span>공급가액</span><span class="num">${fmt(k.supply)}원</span></div>
     <div class="line"><span>VAT 10%</span><span class="num">${fmt(k.vat)}원</span></div>`;
-  $('sTotal').textContent = fmt(k.total)+'원';
+  // 큰 숫자는 월 금액, 계약 총액은 보조 정보로
+  $('sTotal').textContent = fmt(k.mNet)+'원';
+  $('sTotalSub').innerHTML = `${k.sNet?`초기 세팅비 ${fmt(k.sNet)}원 별도 (1회)<br>`:''}${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)`;
   $('sCount').textContent = k.count+'건';
   $('sCountAll').textContent = (k.count*S.months)+'건';
   renderQuote(k);
@@ -697,7 +700,7 @@ function renderQuote(k){
       <div class="q-to"><b>${esc(client||'고객사')} 귀하</b><p>${person?esc(person)+' 님께 · ':''}브랜드 진단 결과에 따른 GEO 미디어 플랜을 제안드립니다.</p></div>
       <dl class="q-kv"><dt>작성일</dt><dd>${dstr(today)}</dd><dt>유효기간</dt><dd>${dstr(until)}까지</dd><dt>계약 기간</dt><dd>${S.months}개월</dd>${owner?`<dt>제안 담당</dt><dd>${esc(owner)}</dd>`:''}</dl>
     </div>
-    <div class="q-hero"><div><small>제안 미디어 플랜</small><b>${esc(client||'브랜드')} GEO 미디어 플랜 · ${planName()}</b></div><div class="amt"><small>총 집행금액 (VAT 포함)</small><b>${fmt(k.total)}원</b></div></div>
+    <div class="q-hero"><div><small>제안 미디어 플랜</small><b>${esc(client||'브랜드')} GEO 미디어 플랜 · ${planName()}</b></div><div class="amt"><small>월 집행금액 (VAT 별도)</small><b>${fmt(k.mNet)}원</b><small style="margin-top:2px">${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)</small></div></div>
     <div class="q-sec"><h3>DIAGNOSIS</h3><div class="q-diag">
       <div><small>업종</small>${label('industry',S.industry)}</div>
       <div><small>현재 상황</small>${label('stage',S.stage)}</div>
