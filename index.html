@@ -387,7 +387,10 @@ html{scroll-behavior:smooth}
 const CATALOG = [
   {id:'audit',  cat:'초기 세팅', name:'AI 검색 노출 진단', desc:'타깃 질문 30개 기준 현재 노출 현황·경쟁사 비교 리포트', unit:'1회', price:500000, type:'setup'},
   {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'스키마 마크업·FAQ 구조·llms.txt 적용', unit:'1회', price:800000, type:'setup'},
-  {id:'blog',   cat:'블로그·SNS', name:'블로그 포스팅', desc:'검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', max:50, step:5, content:true},
+  // 블로그는 플랫폼별로 수량 선택, 플랫폼당 최소 5건(5건 단위)
+  {id:'blog',   cat:'블로그·SNS', name:'블로그 포스팅 · 네이버 블로그', desc:'검색·AI 인용을 고려한 원고 작성·발행 · 최소 5건 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'tistory',cat:'블로그·SNS', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행 · 최소 5건', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'ownblog',cat:'블로그·SNS', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행 · 최소 5건', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'insta',  cat:'블로그·SNS', name:'인스타그램 운영', desc:'주 3회, 월 12건 (릴스 2건 포함)', unit:'식', price:1000000, type:'monthly', max:1, per:12, content:true},
   {id:'threads',cat:'블로그·SNS', name:'스레드 운영', desc:'월 30건 포스팅', unit:'식', price:500000, type:'monthly', max:1, per:30, content:true},
   {id:'youtube',cat:'영상', name:'롱폼 영상 (유튜브)', desc:'기획·촬영·편집·채널 운영, 월 4편 (10분 내외)', unit:'식', price:4000000, type:'monthly', max:1, per:4, content:true},
@@ -407,7 +410,9 @@ const CATALOG = [
 const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
   schema:{what:'홈페이지를 AI와 검색엔진이 읽기 쉬운 구조로 정리합니다.', scope:['스키마 마크업 (회사·서비스·FAQ)','FAQ 페이지 구조 정비','llms.txt 작성·적용'], out:'적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
-  blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 블로그 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  ownblog:{what:'자사 홈페이지 블로그에 글을 쌓아, AI가 브랜드 공식 출처로 인용하도록 만듭니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','홈페이지 블로그 발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', note:'홈페이지 블로그 게시 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   insta:{what:'주 3회 피드와 릴스를 기획·제작해 업로드합니다.', scope:['월 12건 (릴스 2건 포함)','기획·디자인·캡션','업로드 일정 관리'], out:'월간 콘텐츠 캘린더 + 게시물', cases:[]},
   threads:{what:'대표 또는 브랜드 계정으로 매일 스레드 글을 운영합니다.', scope:['월 30건 포스팅','주제 기획·원고 작성','반응 좋은 글 분석'], out:'월간 포스팅 목록', cases:[]},
   youtube:{what:'기획부터 촬영·편집·업로드까지 롱폼 영상을 제작합니다.', scope:['월 4편 (10분 내외)','기획·촬영·편집','썸네일·제목·설명 정리'], out:'업로드 영상 4편', cases:[]},
@@ -587,7 +592,11 @@ function buildItems(){
     const inf = e.target.closest('button[data-info]'); if(inf){ openInfo(inf.dataset.info, inf); return; }
     const b = e.target.closest('button[data-d]'); if(!b) return;
     const id = b.closest('.row').dataset.id, c = byId(id);
-    S.qty[id] = Math.max(0, Math.min(c.max, (S.qty[id]||0) + Number(b.dataset.d)*(c.step||1)));
+    const cur = S.qty[id]||0, d = Number(b.dataset.d), min = c.min||0;
+    let next = cur + d*(c.step||1);
+    if(d>0 && cur<min) next = min;   // 0에서 올리면 최소 수량부터
+    if(d<0 && next<min) next = 0;    // 최소 아래로 내리면 항목 빼기
+    S.qty[id] = Math.max(0, Math.min(c.max, next));
     S.modified = true; render();
   });
   $('items').addEventListener('change', e=>{
