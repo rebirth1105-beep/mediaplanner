@@ -155,6 +155,20 @@ body.present .rp,body.present .ra em{display:none}
 .grp-q{font-size:12.5px;color:var(--muted);text-align:right;display:block}
 .sub{border-left:2px solid var(--accent);margin-left:6px;padding-left:14px;background:var(--accent-soft)}
 .sub .row:last-child{border-bottom:0}
+.incl{margin:12px 0 4px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:grid;gap:12px}
+.incl-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:14px;font-weight:600}
+.incl-h b{font-size:11px;letter-spacing:.08em;color:#fff;background:var(--accent);padding:2px 8px;border-radius:99px}
+.incl-h em{font-style:normal;font-weight:400;font-size:12px;color:var(--accent);margin-left:auto}
+.incl-m{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.incl-m>div{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:4px;align-content:start}
+.incl-m small{font-family:var(--f-num);font-size:10.5px;letter-spacing:.14em;color:var(--accent)}
+.incl-m strong{font-size:14px}
+.incl-m ul{margin:2px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted);display:grid;gap:2px}
+.incl-f{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;counter-reset:f;font-size:12px;color:var(--muted)}
+.incl-f li{counter-increment:f;display:flex;align-items:center;gap:6px}
+.incl-f li::before{content:counter(f);font-family:var(--f-num);font-size:10.5px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--accent);color:var(--accent)}
+.incl-f li:not(:last-child)::after{content:"→";color:var(--line);margin-left:2px}
+@media (max-width:560px){.incl-m{grid-template-columns:minmax(0,1fr)}.incl-h em{margin-left:0}}
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .stepper button{width:32px;height:32px;border:0;background:transparent;cursor:pointer;font-size:16px}
 .stepper button:hover{background:var(--accent-soft)}
@@ -277,6 +291,8 @@ html{scroll-behavior:smooth}
 .q-table td.r,.q-table th.r{text-align:right}
 .q-table td.m{white-space:nowrap}
 .q-table td small{display:block;color:#7883A3;font-size:10.5px}
+.q-table tr.incl-r td{background:#F3F6FD;color:#2963E8;font-weight:600}
+.q-table tr.incl-r td small{font-weight:400}
 .q-table .grp td{background:#F2F5FB;font-weight:600;font-size:11px;color:#0A1330}
 .q-table s{color:#9AA3BC}
 .q-totals{margin-left:auto;width:330px;margin-top:10px;font-size:12.5px}
@@ -418,16 +434,21 @@ const CATALOG = [
 ];
 /* ===== 묶음 항목: 상위 행 이름 (하위 항목은 CATALOG의 group 값으로 연결) ===== */
 const GROUPS = {
-  blog:{name:'블로그 포스팅', desc:'눌러서 블로그를 고르세요 · 블로그별 최소 5건, 5건 단위'},
+  blog:{name:'블로그 포스팅', desc:'운영 전략·키워드 조사 전략 수립 포함 · 블로그별 최소 5건, 5건 단위',
+    // 블로그를 하나라도 고르면 기본 포함되는 전략 업무 (추가 비용 없음)
+    incl:{title:'블로그 운영 전략 · 키워드 조사 전략 수립', modules:[
+      ['STRATEGY','블로그 운영 전략 수립',['브랜드 포지셔닝에 맞춘 블로그별 역할 정의','카테고리·콘텐츠 시리즈 구조 설계','월간 발행 캘린더·톤앤매너 가이드']],
+      ['KEYWORD','키워드 조사 전략 수립',['검색량·경쟁 강도 분석으로 공략 키워드 선별','고객이 AI에게 묻는 질문형 키워드 발굴','핵심·세부 키워드 맵 설계 → 원고 주제 배정']],
+    ], flow:['키워드 조사','운영 전략 수립','원고 작성·발행','성과 확인 후 키워드 조정']}},
 };
 /* ===== 서비스 상세 (ⓘ): 개념·제공 범위·결과물. 사례는 cases에 ['제목','URL'] 추가 ===== */
 const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
   schema:{what:'홈페이지를 AI와 검색엔진이 읽기 쉬운 구조로 정리합니다.', scope:['스키마 마크업 (회사·서비스·FAQ)','FAQ 페이지 구조 정비','llms.txt 작성·적용'], out:'적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
-  blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
-  brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
-  tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
-  ownblog:{what:'자사 홈페이지 블로그에 글을 쌓아, AI가 브랜드 공식 출처로 인용하도록 만듭니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','홈페이지 블로그 발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', note:'홈페이지 블로그 게시 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
+  blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  ownblog:{what:'자사 홈페이지 블로그에 글을 쌓아, AI가 브랜드 공식 출처로 인용하도록 만듭니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','홈페이지 블로그 발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', note:'홈페이지 블로그 게시 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   insta:{what:'주 3회 피드와 릴스를 기획·제작해 업로드합니다.', scope:['월 12건 (릴스 2건 포함)','기획·디자인·캡션','업로드 일정 관리'], out:'월간 콘텐츠 캘린더 + 게시물', cases:[]},
   threads:{what:'대표 또는 브랜드 계정으로 매일 스레드 글을 운영합니다.', scope:['월 30건 포스팅','주제 기획·원고 작성','반응 좋은 글 분석'], out:'월간 포스팅 목록', cases:[]},
   youtube:{what:'기획부터 촬영·편집·업로드까지 롱폼 영상을 제작합니다.', scope:['월 4편 (10분 내외)','기획·촬영·편집','썸네일·제목·설명 정리'], out:'업로드 영상 4편', cases:[]},
@@ -608,7 +629,10 @@ function buildItems(){
         <div class="rp">${fmt(list[0].price)}원 / ${list[0].unit}</div>
         <div class="ctl"><span class="grp-q" id="gq-${g}"></span></div>
         <div class="ra" id="ga-${g}"></div></div>
-      <div class="sub" id="sub-${g}" hidden>${list.map(row).join('')}</div></div>`;
+      <div class="sub" id="sub-${g}" hidden>${GROUPS[g].incl?incl(GROUPS[g].incl):''}${list.map(row).join('')}</div></div>`;
+  const incl = d=>`<div class="incl"><div class="incl-h"><b>기본 포함</b><span>${d.title}</span><em>추가 비용 없음</em></div>
+      <div class="incl-m">${d.modules.map(([en,t,li])=>`<div><small>${en}</small><strong>${t}</strong><ul>${li.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>
+      <ol class="incl-f">${d.flow.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
   $('items').innerHTML = cats.map(cat=>{
     const done = new Set();
     return `<div class="cat"><div class="cat-h">${cat}</div>${CATALOG.filter(c=>c.cat===cat).map(c=>{
@@ -735,7 +759,8 @@ function renderQuote(k){
   const client = $('cName').value.trim(), person = $('cPerson').value.trim(), owner = $('cOwner').value.trim();
   const today = new Date(), until = new Date(today.getTime()+VALID_DAYS*864e5);
   const goals = [...S.goals].map(g=>label('goals',g)).join(', ') || '미선택';
-  const mRows = k.monthly.map(c=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">${c.q}${c.unit}/월</td><td class="r m">${fmt(c.amt)}</td></tr>`).join('');
+  const mRows = k.monthly.map((c,i,a)=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">${c.q}${c.unit}/월</td><td class="r m">${fmt(c.amt)}</td></tr>`+
+    (c.group && GROUPS[c.group].incl && a[i+1]?.group!==c.group ? `<tr class="incl-r"><td>${GROUPS[c.group].incl.title}<small>${GROUPS[c.group].incl.modules.map(m=>m[2].join(' · ')).join(' · ')}</small></td><td class="r m">–</td><td class="r m">포함</td><td class="r m">포함</td></tr>` : '')).join('');
   const sRows = k.setup.map(c=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">1회</td><td class="r m">${c.free?`<s>${fmt(c.amt)}</s> 0`:fmt(c.amt)}</td></tr>`).join('');
   $('quote').innerHTML = `
     <div class="q-top">
@@ -795,7 +820,8 @@ function fileBase(){ return `스텝업_GEO미디어플랜_${($('cName').value.tr
 function summaryText(){
   const k = calc(), c = $('cName').value.trim()||'고객사';
   return [`[${c}] GEO 미디어 플랜 (${QNO})`, `플랜: ${planName()} · ${S.months}개월`, '',
-    ...k.monthly.map(i=>`- ${i.name} ${i.q}${i.unit}/월: ${fmt(i.amt)}원`),
+    ...k.monthly.map((i,n,a)=>`- ${i.name} ${i.q}${i.unit}/월: ${fmt(i.amt)}원`+(i.group && GROUPS[i.group].incl && a[n+1]?.group!==i.group ? `
+- ${GROUPS[i.group].incl.title}: 포함`:'')),
     ...k.setup.map(i=>`- ${i.name} (1회): ${i.free?'무상':fmt(i.amt)+'원'}`), '',
     `월 운영비: ${fmt(k.mNet)}원${k.mDisc?` (기간 할인 ${Math.round(k.rate*100)}% 적용)`:''}`,
     `공급가액: ${fmt(k.supply)}원 / VAT: ${fmt(k.vat)}원`, `총 집행금액: ${fmt(k.total)}원 (VAT 포함)`].join('\n');
