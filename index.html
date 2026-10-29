@@ -146,6 +146,15 @@ body.present .rp,body.present .ra em{display:none}
 .ra s{font-weight:400;font-size:12px;color:var(--muted);margin-right:4px}
 .ra em{display:block;font-style:normal;font-weight:400;font-size:11.5px;color:var(--muted)}
 .row.off .ra{color:var(--muted);font-weight:400}
+/* 묶음 항목 (블로그 포스팅 → 플랫폼 하위 메뉴) */
+.grp-t{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.grp-t:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.grp-t .caret{font-size:12px;color:var(--accent);transition:transform .2s}
+.grp-t[aria-expanded="true"] .caret{transform:rotate(180deg)}
+.grp-h .rd{color:var(--accent)}
+.grp-q{font-size:12.5px;color:var(--muted);text-align:right;display:block}
+.sub{border-left:2px solid var(--accent);margin-left:6px;padding-left:14px;background:var(--accent-soft)}
+.sub .row:last-child{border-bottom:0}
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .stepper button{width:32px;height:32px;border:0;background:transparent;cursor:pointer;font-size:16px}
 .stepper button:hover{background:var(--accent-soft)}
@@ -387,10 +396,11 @@ html{scroll-behavior:smooth}
 const CATALOG = [
   {id:'audit',  cat:'초기 세팅', name:'AI 검색 노출 진단', desc:'타깃 질문 30개 기준 현재 노출 현황·경쟁사 비교 리포트', unit:'1회', price:500000, type:'setup'},
   {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'스키마 마크업·FAQ 구조·llms.txt 적용', unit:'1회', price:800000, type:'setup'},
-  // 블로그는 플랫폼별로 수량 선택, 플랫폼당 최소 5건(5건 단위)
-  {id:'blog',   cat:'블로그·SNS', name:'블로그 포스팅 · 네이버 블로그', desc:'검색·AI 인용을 고려한 원고 작성·발행 · 최소 5건 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'tistory',cat:'블로그·SNS', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행 · 최소 5건', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'ownblog',cat:'블로그·SNS', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행 · 최소 5건', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  // 블로그 포스팅: group으로 묶어 하위 메뉴(플랫폼)에서 수량 선택, 블로그별 최소 5건·5건 단위
+  {id:'blog',     cat:'블로그·SNS', group:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'brandblog',cat:'블로그·SNS', group:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'tistory',  cat:'블로그·SNS', group:'blog', sub:'티스토리', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'ownblog',  cat:'블로그·SNS', group:'blog', sub:'홈페이지 자체 블로그', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'insta',  cat:'블로그·SNS', name:'인스타그램 운영', desc:'주 3회, 월 12건 (릴스 2건 포함)', unit:'식', price:1000000, type:'monthly', max:1, per:12, content:true},
   {id:'threads',cat:'블로그·SNS', name:'스레드 운영', desc:'월 30건 포스팅', unit:'식', price:500000, type:'monthly', max:1, per:30, content:true},
   {id:'youtube',cat:'영상', name:'롱폼 영상 (유튜브)', desc:'기획·촬영·편집·채널 운영, 월 4편 (10분 내외)', unit:'식', price:4000000, type:'monthly', max:1, per:4, content:true},
@@ -406,11 +416,16 @@ const CATALOG = [
   {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
   {id:'legal',  cat:'관리·리포트', name:'광고 표현 기초 점검 (AI)', desc:'의료·식품·금융 과장 표현, 표시광고법 위험 표현 1차 점검 · 전문가 법률 검토 아님', unit:'월', price:200000, type:'monthly', max:1},
 ];
+/* ===== 묶음 항목: 상위 행 이름 (하위 항목은 CATALOG의 group 값으로 연결) ===== */
+const GROUPS = {
+  blog:{name:'블로그 포스팅', desc:'눌러서 블로그를 고르세요 · 블로그별 최소 5건, 5건 단위'},
+};
 /* ===== 서비스 상세 (ⓘ): 개념·제공 범위·결과물. 사례는 cases에 ['제목','URL'] 추가 ===== */
 const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
   schema:{what:'홈페이지를 AI와 검색엔진이 읽기 쉬운 구조로 정리합니다.', scope:['스키마 마크업 (회사·서비스·FAQ)','FAQ 페이지 구조 정비','llms.txt 작성·적용'], out:'적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   ownblog:{what:'자사 홈페이지 블로그에 글을 쌓아, AI가 브랜드 공식 출처로 인용하도록 만듭니다.', scope:['키워드·질문 기반 주제 선정','원고 작성·이미지 구성','홈페이지 블로그 발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', note:'홈페이지 블로그 게시 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   insta:{what:'주 3회 피드와 릴스를 기획·제작해 업로드합니다.', scope:['월 12건 (릴스 2건 포함)','기획·디자인·캡션','업로드 일정 관리'], out:'월간 콘텐츠 캘린더 + 게시물', cases:[]},
@@ -579,16 +594,32 @@ function buildPackages(){
 }
 function buildItems(){
   const cats = [...new Set(CATALOG.map(c=>c.cat))];
-  $('items').innerHTML = cats.map(cat=>`<div class="cat"><div class="cat-h">${cat}</div>${
-    CATALOG.filter(c=>c.cat===cat).map(c=>`<div class="row" data-id="${c.id}">
-      <div><div class="rn">${c.name}<button type="button" class="info" data-info="${c.id}" aria-label="${c.name} 상세 보기">i</button></div><div class="rd">${c.desc}</div></div>
+  const row = c=>`<div class="row" data-id="${c.id}">
+      <div><div class="rn">${c.sub||c.name}<button type="button" class="info" data-info="${c.id}" aria-label="${c.name} 상세 보기">i</button></div><div class="rd">${c.desc}</div></div>
       <div class="rp">${fmt(c.price)}원 / ${c.unit}</div>
       <div class="ctl">${c.type==='setup'
         ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> 포함</label>`
         : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
       <div class="ra" id="a-${c.id}"></div>
-    </div>`).join('')}</div>`).join('');
+    </div>`;
+  // 묶음 항목은 상위 행 1개 + 펼치는 하위 메뉴
+  const group = (g, list)=>`<div class="grp" data-group="${g}">
+      <div class="row grp-h"><div><button type="button" class="grp-t" data-toggle="${g}" aria-expanded="false" aria-controls="sub-${g}"><span class="rn">${GROUPS[g].name}</span><span class="caret" aria-hidden="true">▾</span></button><div class="rd">${GROUPS[g].desc}</div></div>
+        <div class="rp">${fmt(list[0].price)}원 / ${list[0].unit}</div>
+        <div class="ctl"><span class="grp-q" id="gq-${g}"></span></div>
+        <div class="ra" id="ga-${g}"></div></div>
+      <div class="sub" id="sub-${g}" hidden>${list.map(row).join('')}</div></div>`;
+  $('items').innerHTML = cats.map(cat=>{
+    const done = new Set();
+    return `<div class="cat"><div class="cat-h">${cat}</div>${CATALOG.filter(c=>c.cat===cat).map(c=>{
+      if(!c.group) return row(c);
+      if(done.has(c.group)) return '';
+      done.add(c.group); return group(c.group, CATALOG.filter(x=>x.group===c.group));
+    }).join('')}</div>`;
+  }).join('');
   $('items').addEventListener('click', e=>{
+    const t = e.target.closest('button[data-toggle]');
+    if(t){ const open = t.getAttribute('aria-expanded')!=='true'; t.setAttribute('aria-expanded', open); $('sub-'+t.dataset.toggle).hidden = !open; return; }
     const inf = e.target.closest('button[data-info]'); if(inf){ openInfo(inf.dataset.info, inf); return; }
     const b = e.target.closest('button[data-d]'); if(!b) return;
     const id = b.closest('.row').dataset.id, c = byId(id);
@@ -660,6 +691,12 @@ function render(){
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
       $('a-'+c.id).innerHTML = q ? `${fmt(c.price*q)}원<small>/월</small><em>${fmt(c.price)}원 × ${q}${c.unit}</em>` : '–';
     }
+  });
+  Object.keys(GROUPS).forEach(g=>{
+    const on = CATALOG.filter(c=>c.group===g && S.qty[c.id]>0), q = on.reduce((a,c)=>a+S.qty[c.id],0);
+    $('gq-'+g).textContent = q ? on.map(c=>`${c.sub} ${S.qty[c.id]}`).join(' · ') : '선택 없음';
+    $('ga-'+g).innerHTML = q ? `${fmt(on.reduce((a,c)=>a+c.price*S.qty[c.id],0))}원<small>/월</small><em>총 ${q}건</em>` : '–';
+    document.querySelector(`.grp[data-group="${g}"] .grp-h`).classList.toggle('off', !q);
   });
 
   const k = calc();
