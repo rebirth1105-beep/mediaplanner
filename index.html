@@ -433,6 +433,8 @@ html{scroll-behavior:smooth}
 const CATALOG = [
   {id:'audit',  cat:'초기 세팅', name:'AI 검색 노출 진단', desc:'타깃 질문 30개 기준 현재 노출 현황·경쟁사 비교 리포트', unit:'1회', price:500000, type:'setup'},
   {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'스키마 마크업·FAQ 구조·llms.txt 적용', unit:'1회', price:800000, type:'setup'},
+  // 홈페이지 제작에는 구조화 데이터 세팅이 포함됨 → 함께 고르면 세팅 항목은 자동 해제 (단가 임시)
+  {id:'web',    cat:'초기 세팅', name:'GEO·SEO 최적화 홈페이지 제작', desc:'AI·검색엔진이 읽고 인용하기 좋은 구조로 설계·제작 · 구조화 데이터·llms.txt·FAQ 기본 포함', unit:'1회', price:3000000, type:'setup', covers:['schema']},
   // 블로그 포스팅: group으로 묶어 하위 메뉴(플랫폼)에서 수량 선택, 블로그별 최소 5건·5건 단위
   {id:'blog',     cat:'블로그·SNS', group:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'brandblog',cat:'블로그·SNS', group:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
@@ -465,6 +467,7 @@ const GROUPS = {
 /* ===== 서비스 상세 (ⓘ): 개념·제공 범위·결과물. 사례는 cases에 ['제목','URL'] 추가 ===== */
 const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
+  web:{what:'처음부터 AI와 검색엔진이 브랜드를 정확히 읽고 인용하도록 설계한 홈페이지를 만듭니다.', scope:['브랜드·서비스 정보 구조 설계 (AI가 답변에 쓰는 질문 기준)','반응형 홈페이지 디자인·제작','구조화 데이터(스키마)·FAQ·llms.txt 기본 적용','검색 등록 (구글 서치콘솔·네이버 서치어드바이저)','문의 폼 연결'], out:'오픈된 홈페이지 + 적용 체크리스트', note:'웹사이트 구조화 데이터 세팅이 포함되어 있어 따로 선택하지 않아도 됩니다. 도메인·호스팅 비용은 별도입니다.', cases:[]},
   schema:{what:'홈페이지를 AI와 검색엔진이 읽기 쉬운 구조로 정리합니다.', scope:['스키마 마크업 (회사·서비스·FAQ)','FAQ 페이지 구조 정비','llms.txt 작성·적용'], out:'적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
@@ -640,7 +643,7 @@ function buildItems(){
       <div><div class="rn">${c.sub||c.name}<button type="button" class="info" data-info="${c.id}" aria-label="${c.name} 상세 보기">i</button></div><div class="rd">${c.desc}</div></div>
       <div class="rp">${fmt(c.price)}원 / ${c.unit}</div>
       <div class="ctl">${c.type==='setup'
-        ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> 포함</label>`
+        ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> <span id="tl-${c.id}">포함</span></label>`
         : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
       <div class="ra" id="a-${c.id}"></div>
     </div>`;
@@ -677,7 +680,10 @@ function buildItems(){
   });
   $('items').addEventListener('change', e=>{
     if(e.target.type!=='checkbox') return;
-    S.setup[e.target.closest('.row').dataset.id] = e.target.checked; S.modified = true; render();
+    const id = e.target.closest('.row').dataset.id;
+    S.setup[id] = e.target.checked;
+    if(e.target.checked) (byId(id).covers||[]).forEach(x=>S.setup[x] = false);   // 포함된 항목은 중복 청구 안 함
+    S.modified = true; render();
   });
 }
 
@@ -729,8 +735,12 @@ function render(){
   CATALOG.forEach(c=>{
     const row = document.querySelector(`.row[data-id="${c.id}"]`);
     if(c.type==='setup'){
-      $('chk-'+c.id).checked = !!S.setup[c.id]; row.classList.toggle('off', !S.setup[c.id]);
-      $('a-'+c.id).innerHTML = !S.setup[c.id] ? '–' : c.id==='audit' ? `<s>${fmt(c.price)}</s>무상` : `${fmt(c.price)}원<small>1회</small>`;
+      // 다른 항목(홈페이지 제작)에 포함되면 체크 잠금 + '…에 포함' 표시
+      const by = CATALOG.find(x=>S.setup[x.id] && (x.covers||[]).includes(c.id));
+      $('chk-'+c.id).checked = !!S.setup[c.id] || !!by; $('chk-'+c.id).disabled = !!by;
+      $('tl-'+c.id).textContent = by ? '홈페이지 제작에 포함' : '포함';
+      row.classList.toggle('off', !S.setup[c.id] && !by);
+      $('a-'+c.id).innerHTML = by ? '포함' : !S.setup[c.id] ? '–' : c.id==='audit' ? `<s>${fmt(c.price)}</s>무상` : `${fmt(c.price)}원<small>1회</small>`;
     } else {
       const q = S.qty[c.id]||0;
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
