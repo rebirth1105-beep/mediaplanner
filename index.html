@@ -56,8 +56,27 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .session-h .num{font-size:12.5px;color:var(--muted);font-weight:500}
 .sess-date{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:400}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
-/* 발표 모드: 화면 공유 시 단가·계산식은 숨기고 항목 총액만 보여줌 */
-body.present .rp,body.present .ra em{display:none}
+/* 발표 모드: 구성하는 동안은 금액을 숨기고(가치 먼저), 03 미디어 플랜에서 한 번에 공개 */
+body.present .rp,body.present .ra,body.present .pkg .pp,
+body.present #sLines,body.present .sum .hr,body.present .sum .total,body.present .sum .fine,body.present #btnPng2,
+body.present:not(.view-quote) #s3,body.present .only-full{display:none}
+.only-present,.pkg .pb{display:none}
+body.present .only-present{display:revert}
+body.present .pkg .pb{display:block;font-size:13px;font-weight:600;color:var(--accent)}
+body.present .row{grid-template-columns:minmax(0,1fr) 118px}
+@media (max-width:560px){body.present .row{grid-template-columns:minmax(0,1fr) auto}}
+/* 공개 카드: 정가 → 기간 할인 → 월 집행금액 순서로 등장 */
+.reveal{display:none}
+body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center;padding:26px 18px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2)}
+.reveal>*{opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s}
+.reveal.go>*{opacity:1;transform:none}
+.reveal.go>:nth-child(2){transition-delay:.7s}.reveal.go>:nth-child(3){transition-delay:1.4s}.reveal.go>:nth-child(4){transition-delay:2.1s}
+.reveal .rv-l{font-size:13px;color:var(--muted)}
+.reveal .rv-list s{font-family:var(--f-num);font-size:18px;color:var(--muted)}
+.reveal .rv-disc{font-size:14px;font-weight:600;color:var(--good)}
+.reveal .rv-net{display:grid;gap:2px;margin-top:8px}
+.reveal .rv-net strong{font-family:var(--f-num);font-size:40px;font-weight:700;letter-spacing:-.02em;color:var(--fg)}
+.reveal .rv-net small{font-size:12.5px;color:var(--muted)}
 
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
 @media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
@@ -248,7 +267,7 @@ body.view-plan #s1{display:none}
 @media print{
   @page{size:A4;margin:0}
   body{background:#fff;padding:0}
-  .appbar,.session,.flow,#s1,#s2,.sum,#s3>.step-h,#s3>.actions,.rx-load,.sv{display:none!important}
+  .appbar,.session,.flow,#s1,#s2,.sum,#s3>.step-h,#s3>.actions,.reveal,.rx-load,.sv{display:none!important}
   .grid,.steps{display:block}
   #s3{border:0;padding:0;background:#fff}
   .qwrap{padding:0;background:#fff;overflow:visible}
@@ -356,7 +375,7 @@ html{scroll-behavior:smooth}
 
       <!-- 02 구성 -->
       <section class="step" id="s2">
-        <div class="step-h"><span class="step-no">02</span><div><h2>프로그램 구성</h2><p>진단 결과에 따라 처방된 구성입니다. 수량을 바꾸면 금액이 바로 다시 계산됩니다.</p></div><button class="ghost back" type="button" data-go="diag">← 진단 수정</button></div>
+        <div class="step-h"><span class="step-no">02</span><div><h2>프로그램 구성</h2><p><span class="only-full">진단 결과에 따라 처방된 구성입니다. 수량을 바꾸면 금액이 바로 다시 계산됩니다.</span><span class="only-present">진단 결과에 따라 처방된 구성입니다. 함께 보면서 필요한 만큼 조정하세요.</span></p></div><button class="ghost back" type="button" data-go="diag">← 진단 수정</button></div>
         <div class="pkgs" id="pkgs"></div>
         <div class="reasons" id="reasons"></div>
         <div id="items" style="display:grid;gap:22px"></div>
@@ -372,6 +391,7 @@ html{scroll-behavior:smooth}
           <button class="ghost" id="btnCopy" type="button">플랜 요약 복사</button>
           <span class="toast" id="toast" role="status"></span>
         </div>
+        <div class="reveal" id="reveal" aria-live="polite"></div>
         <div class="qwrap"><div class="qpaper" id="quote"></div></div>
       </section>
     </div>
@@ -387,7 +407,8 @@ html{scroll-behavior:smooth}
         <div><small>계약 기간 총 발행</small><b id="sCountAll">0건</b></div>
       </div>
       <button class="primary" id="btnPng2" type="button" hidden style="justify-self:stretch">미디어 플랜 이미지 저장</button>
-      <button class="ghost" type="button" data-go="quote">미디어 플랜 미리보기 ↓</button>
+      <button class="ghost only-full" type="button" data-go="quote">미디어 플랜 미리보기 ↓</button>
+      <button class="primary only-present" type="button" data-go="quote" style="justify-self:stretch">구성 확정 · 미디어 플랜 보기 →</button>
       <p class="fine">표시 단가는 VAT 별도 기준입니다. 패키지를 선택하면 AI 검색 노출 진단이 무상으로 포함됩니다.</p>
     </aside>
   </div>
@@ -606,7 +627,7 @@ function buildPackages(){
   $('pkgs').innerHTML = Object.entries(PACKAGES).map(([k,p])=>{
     return `<button type="button" class="pkg" data-k="${k}"><span class="badge" hidden>진단 추천</span>
       <span class="pn">${p.name}</span><span class="pd">${p.desc}</span>
-      <span class="pp"></span></button>`;
+      <span class="pp"></span><span class="pb">${label('budget',{starter:'low',growth:'mid',premium:'high'}[k])} 예산</span></button>`;
   }).join('');
   $('pkgs').addEventListener('click', e=>{
     const b = e.target.closest('.pkg'); if(!b) return;
@@ -736,6 +757,10 @@ function render(){
   // 큰 숫자는 월 금액, 계약 총액은 보조 정보로
   $('sTotal').textContent = fmt(k.mNet)+'원';
   $('sTotalSub').innerHTML = `${k.sNet?`초기 세팅비 ${fmt(k.sNet)}원 별도 (1회)<br>`:''}${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)`;
+  $('reveal').innerHTML = `<div class="rv-l">${planName()} · ${S.months}개월 · 월 콘텐츠 ${k.count}건</div>
+    <div class="rv-list">${k.mDisc?`월 정가 <s>${fmt(k.mList)}원</s>`:''}</div>
+    <div class="rv-disc">${k.mDisc?`${S.months}개월 약정 할인 −${Math.round(k.rate*100)}% 적용`:''}</div>
+    <div class="rv-net"><small>월 집행금액 (VAT 별도)</small><strong>${fmt(k.mNet)}원</strong><small>${k.sNet?`초기 세팅비 ${fmt(k.sNet)}원 별도 (1회) · `:''}${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)</small></div>`;
   $('sCount').textContent = k.count+'건';
   $('sCountAll').textContent = (k.count*S.months)+'건';
   renderQuote(k);
@@ -879,6 +904,10 @@ function showView(v){
   const plan = v!=='diag';
   document.body.classList.toggle('view-diag', !plan);
   document.body.classList.toggle('view-plan', plan);
+  document.body.classList.toggle('view-quote', v==='quote');
+  // 발표 모드 금액 공개: 03에 들어올 때마다 정가 → 할인 → 월 집행금액 순서로
+  const rv = $('reveal'); rv.classList.remove('go');
+  if(v==='quote') requestAnimationFrame(()=>requestAnimationFrame(()=>rv.classList.add('go')));
   document.querySelectorAll('.flow button').forEach(b=>{
     const cur = v==='diag' ? 'diag' : (v==='quote' ? 'quote' : 'plan');
     if(b.dataset.go===cur) b.setAttribute('aria-current','step'); else b.removeAttribute('aria-current');
