@@ -125,6 +125,13 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .pkg.rec{border-color:var(--accent);box-shadow:0 8px 24px -12px var(--accent)}
 
 /* 서비스 상세 (ⓘ) */
+.tier{display:inline-flex;margin-top:6px;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.tier button{border:0;background:transparent;padding:4px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.tier button+button{border-left:1px solid var(--line)}
+.tier button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.grp-h .tier{display:flex;width:max-content}
+.sv-geo{border-top:1px solid var(--line);padding-top:12px}
+.sv-geo>b{color:var(--accent)}
 .info{border:1px solid var(--line);background:transparent;width:20px;height:20px;border-radius:50%;font-size:11.5px;font-weight:700;line-height:1;color:var(--muted);cursor:pointer;margin-left:6px;vertical-align:1px;padding:0}
 .info:hover{border-color:var(--accent);color:var(--accent)}
 .sv{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:24px;background:color-mix(in srgb,var(--bg) 70%,transparent)}
@@ -436,25 +443,36 @@ const CATALOG = [
   // 홈페이지 제작에는 구조화 데이터 세팅이 포함됨 → 함께 고르면 세팅 항목은 자동 해제 (단가 임시)
   {id:'web',    cat:'초기 세팅', name:'GEO·SEO 최적화 홈페이지 제작', desc:'AI·검색엔진이 읽고 인용하기 좋은 구조로 설계·제작 · 구조화 데이터·llms.txt·FAQ 기본 포함', unit:'1회', price:3000000, type:'setup', covers:['schema']},
   // 블로그 포스팅: group으로 묶어 하위 메뉴(플랫폼)에서 수량 선택, 블로그별 최소 5건·5건 단위
-  {id:'blog',     cat:'블로그·SNS', group:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'brandblog',cat:'블로그·SNS', group:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'tistory',  cat:'블로그·SNS', group:'blog', sub:'티스토리', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'ownblog',  cat:'블로그·SNS', group:'blog', sub:'홈페이지 자체 블로그', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'blog',     cat:'블로그·SNS', group:'blog', geo:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'brandblog',cat:'블로그·SNS', group:'blog', geo:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'tistory',  cat:'블로그·SNS', group:'blog', geo:'blog', sub:'티스토리', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'ownblog',  cat:'블로그·SNS', group:'blog', geo:'blog', sub:'홈페이지 자체 블로그', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'insta',  cat:'블로그·SNS', name:'인스타그램 운영', desc:'주 3회, 월 12건 (릴스 2건 포함)', unit:'식', price:1000000, type:'monthly', max:1, per:12, content:true},
   {id:'threads',cat:'블로그·SNS', name:'스레드 운영', desc:'월 30건 포스팅', unit:'식', price:500000, type:'monthly', max:1, per:30, content:true},
+  {id:'card',   cat:'블로그·SNS', name:'기사 카드뉴스 재가공', desc:'기사 1편을 카드뉴스 8장 + 스레드 포스팅 5개로', unit:'세트', price:120000, type:'monthly', max:8, content:true},
   {id:'youtube',cat:'영상', name:'롱폼 영상 (유튜브)', desc:'기획·촬영·편집·채널 운영, 월 4편 (10분 내외)', unit:'식', price:4000000, type:'monthly', max:1, per:4, content:true},
   {id:'shorts', cat:'영상', name:'숏폼 묶음', desc:'인스타 릴스·유튜브 쇼츠·틱톡 동시 배포, 1분 이하', unit:'식', price:1500000, type:'monthly', max:1},
-  {id:'faq',    cat:'GEO 콘텐츠', name:'AI 답변용 Q&A 콘텐츠', desc:'타깃 질문별 정답형 콘텐츠 제작·배포', unit:'건', price:100000, type:'monthly', max:30, content:true},
-  {id:'card',   cat:'GEO 콘텐츠', name:'기사 카드뉴스 재가공', desc:'기사 1편을 카드뉴스 8장 + 스레드 포스팅 5개로', unit:'세트', price:120000, type:'monthly', max:8, content:true},
-  {id:'brand',  cat:'언론 노출', name:'브랜드 인터뷰 기사', desc:'대표 인터뷰 기반 기사 작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'건', price:300000, type:'monthly', max:4, content:true},
-  {id:'column', cat:'언론 노출', name:'전문가 칼럼 연재', desc:'대표 명의 칼럼 기획·작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'편', price:400000, type:'monthly', max:4, content:true},
+  {id:'faq',    cat:'AI 답변 최적화', name:'AI 답변용 Q&A 콘텐츠', desc:'타깃 질문별 정답형 콘텐츠 제작·배포', unit:'건', price:100000, type:'monthly', max:30, content:true},
+  {id:'brand',  cat:'언론 노출', geo:'article', name:'브랜드 인터뷰 기사', desc:'대표 인터뷰 기반 기사 작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'건', price:300000, type:'monthly', max:4, content:true},
+  {id:'column', cat:'언론 노출', geo:'article', name:'전문가 칼럼 연재', desc:'대표 명의 칼럼 기획·작성 · 대한청년일보 게재 + 200개 언론사 송출', unit:'편', price:400000, type:'monthly', max:4, content:true},
   // 보도자료 3단계 (회의안 15/30/45, 45만 원 이상은 메이저 언론사)
-  {id:'press',  cat:'언론 노출', name:'보도자료 · 기본', desc:'사실기사 형식 원고 작성 · 대한청년일보 게재', unit:'건', price:150000, type:'monthly', max:8, content:true},
-  {id:'pressP', cat:'언론 노출', name:'보도자료 · 제휴 매체', desc:'사실기사 형식 원고 작성 · 제휴 언론사 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
-  {id:'pressM', cat:'언론 노출', name:'보도자료 · 메이저 언론', desc:'사실기사 형식 원고 작성 · 메이저 언론사 게재', unit:'건', price:450000, type:'monthly', max:4, content:true},
+  {id:'press',  cat:'언론 노출', geo:'article', name:'보도자료 · 기본', desc:'사실기사 형식 원고 작성 · 대한청년일보 게재', unit:'건', price:150000, type:'monthly', max:8, content:true},
+  {id:'pressP', cat:'언론 노출', geo:'article', name:'보도자료 · 제휴 매체', desc:'사실기사 형식 원고 작성 · 제휴 언론사 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
+  {id:'pressM', cat:'언론 노출', geo:'article', name:'보도자료 · 메이저 언론', desc:'사실기사 형식 원고 작성 · 메이저 언론사 게재', unit:'건', price:450000, type:'monthly', max:4, content:true},
   {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
   {id:'legal',  cat:'관리·리포트', name:'광고 표현 기초 점검 (AI)', desc:'의료·식품·금융 과장 표현, 표시광고법 위험 표현 1차 점검 · 전문가 법률 검토 아님', unit:'월', price:200000, type:'monthly', max:1},
 ];
+/* ===== 일반 / GEO 최적화 버전: geo 값이 있는 항목은 버전 선택 가능, GEO는 일반 단가 + 40% (임시) ===== */
+const GEO_PREMIUM = 0.4;
+const GEO_ADDS = {
+  blog:['AI에게 실제로 묻는 질문형 키워드로 주제 선정','AI가 인용하기 좋은 구조 (핵심 요약 · Q&A 블록 · 출처 표기)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','발행 후 주요 AI 답변 반영 여부 점검'],
+  article:['AI가 인용하기 좋은 기사 구조 (핵심 요약 · 팩트 박스)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','게재 후 주요 AI 답변 반영 여부 점검'],
+};
+const tierKey = c => c.group||c.id;
+const isGeo = c => !!c.geo && S.tier[tierKey(c)]!=='basic';    // 기본값은 GEO 최적화
+const P = c => isGeo(c) ? Math.round(c.price*(1+GEO_PREMIUM)/1000)*1000 : c.price;
+const tierName = c => c.geo ? (isGeo(c) ? 'GEO 최적화' : '일반') : '';
+const tierSwitch = (key, label) => `<span class="tier" data-tier="${key}" role="group" aria-label="${label} 버전"><button type="button" data-t="basic">일반</button><button type="button" data-t="geo">GEO 최적화</button></span>`;
 /* ===== 묶음 항목: 상위 행 이름 (하위 항목은 CATALOG의 group 값으로 연결) ===== */
 const GROUPS = {
   blog:{name:'블로그 포스팅', desc:'운영 전략·키워드 조사 전략 수립 포함 · 블로그별 최소 5건, 5건 단위',
@@ -556,7 +574,7 @@ const QUESTIONS = {
 /* ===== 상태 (처음 열면 예시 진단으로 채워진 상태) ===== */
 const S = {
   industry:'edu', pain:'aimiss', goals:new Set(['ai','expert']), stage:'blog', budget:'mid', months:6,
-  pkg:'growth', rec:'growth', modified:false, qty:{}, setup:{}, reasons:[],
+  pkg:'growth', rec:'growth', modified:false, qty:{}, setup:{}, tier:{}, reasons:[],
 };
 const byId = id => CATALOG.find(c=>c.id===id);
 const label = (q,v) => (Q[q].opts.find(o=>o[0]===String(v))||[])[1]||'';
@@ -593,7 +611,7 @@ function recommend(){
 
 function calc(){
   const rate = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
-  const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, q:S.qty[c.id], amt:c.price*S.qty[c.id]}));
+  const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, name:c.name+(c.geo?` (${tierName(c)})`:''), desc:c.desc+(isGeo(c)?' · AI 인용 구조·반영 점검 포함':''), price:P(c), q:S.qty[c.id], amt:P(c)*S.qty[c.id]}));
   const setup = CATALOG.filter(c=>c.type==='setup' && S.setup[c.id]).map(c=>({...c, q:1, amt:c.price, free: c.id==='audit' && S.pkg!=='custom'}));
   const mList = monthly.reduce((a,c)=>a+c.amt,0);
   const mDisc = r1000(mList*rate);
@@ -640,8 +658,8 @@ function buildPackages(){
 function buildItems(){
   const cats = [...new Set(CATALOG.map(c=>c.cat))];
   const row = c=>`<div class="row" data-id="${c.id}">
-      <div><div class="rn">${c.sub||c.name}<button type="button" class="info" data-info="${c.id}" aria-label="${c.name} 상세 보기">i</button></div><div class="rd">${c.desc}</div></div>
-      <div class="rp">${fmt(c.price)}원 / ${c.unit}</div>
+      <div><div class="rn">${c.sub||c.name}<button type="button" class="info" data-info="${c.id}" aria-label="${c.name} 상세 보기">i</button></div><div class="rd">${c.desc}</div>${c.geo&&!c.group?tierSwitch(c.id,c.name):''}</div>
+      <div class="rp" id="rp-${c.id}"></div>
       <div class="ctl">${c.type==='setup'
         ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> <span id="tl-${c.id}">포함</span></label>`
         : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
@@ -649,8 +667,8 @@ function buildItems(){
     </div>`;
   // 묶음 항목은 상위 행 1개 + 펼치는 하위 메뉴
   const group = (g, list)=>`<div class="grp" data-group="${g}">
-      <div class="row grp-h"><div><button type="button" class="grp-t" data-toggle="${g}" aria-expanded="false" aria-controls="sub-${g}"><span class="rn">${GROUPS[g].name}</span><span class="caret" aria-hidden="true">▾</span></button><div class="rd">${GROUPS[g].desc}</div></div>
-        <div class="rp">${fmt(list[0].price)}원 / ${list[0].unit}</div>
+      <div class="row grp-h"><div><button type="button" class="grp-t" data-toggle="${g}" aria-expanded="false" aria-controls="sub-${g}"><span class="rn">${GROUPS[g].name}</span><span class="caret" aria-hidden="true">▾</span></button><div class="rd">${GROUPS[g].desc}</div>${list[0].geo?tierSwitch(g,GROUPS[g].name):''}</div>
+        <div class="rp" id="grp-rp-${g}"></div>
         <div class="ctl"><span class="grp-q" id="gq-${g}"></span></div>
         <div class="ra" id="ga-${g}"></div></div>
       <div class="sub" id="sub-${g}" hidden>${GROUPS[g].incl?incl(GROUPS[g].incl):''}${list.map(row).join('')}</div></div>`;
@@ -666,6 +684,8 @@ function buildItems(){
     }).join('')}</div>`;
   }).join('');
   $('items').addEventListener('click', e=>{
+    const tb = e.target.closest('.tier button');
+    if(tb){ S.tier[tb.parentElement.dataset.tier] = tb.dataset.t; render(); return; }
     const t = e.target.closest('button[data-toggle]');
     if(t){ const open = t.getAttribute('aria-expanded')!=='true'; t.setAttribute('aria-expanded', open); $('sub-'+t.dataset.toggle).hidden = !open; return; }
     const inf = e.target.closest('button[data-info]'); if(inf){ openInfo(inf.dataset.info, inf); return; }
@@ -696,6 +716,7 @@ function openInfo(id, from){
     <p>${d.what}</p>
     <div class="sv-b"><b>제공 범위</b><ul>${d.scope.map(s=>`<li>${s}</li>`).join('')}</ul></div>
     <div class="sv-b"><b>결과물</b><p>${d.out}</p></div>
+    ${c.geo?`<div class="sv-b sv-geo"><b>GEO 최적화 버전에서 더해지는 것</b><ul>${GEO_ADDS[c.geo].map(x=>`<li>${x}</li>`).join('')}</ul><p class="sv-note">일반 버전은 검색 노출 중심 원고, GEO 최적화 버전은 AI 답변 인용까지 설계한 원고입니다.</p></div>`:''}
     <div class="sv-b"><b>사례</b>${d.cases.length
       ? `<ul>${d.cases.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${t}</a></li>`).join('')}</ul>`
       : '<p style="color:var(--muted)">상담 후 포트폴리오로 따로 전달드립니다.</p>'}</div>
@@ -726,7 +747,7 @@ function render(){
     b.classList.toggle('rec', b.dataset.k===S.rec);
     b.querySelector('.badge').hidden = b.dataset.k!==S.rec;
     // 카드 가격도 선택한 기간 할인을 반영
-    const m = CATALOG.reduce((a,c)=>a+(PACKAGES[b.dataset.k].items[c.id]||0)*c.price,0), r = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
+    const m = CATALOG.reduce((a,c)=>a+(PACKAGES[b.dataset.k].items[c.id]||0)*P(c),0), r = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
     b.querySelector('.pp').innerHTML = `월 ${fmt((m-r1000(m*r))/10000)}만 원<small> 부터 · VAT 별도</small>` +
       (r ? `<small style="display:block"><s>정가 ${fmt(m/10000)}만 원</s> · ${S.months}개월 −${Math.round(r*100)}%</small>` : '');
   });
@@ -744,13 +765,16 @@ function render(){
     } else {
       const q = S.qty[c.id]||0;
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
-      $('a-'+c.id).innerHTML = q ? `${fmt(c.price*q)}원<small>/월</small><em>${fmt(c.price)}원 × ${q}${c.unit}</em>` : '–';
+      $('a-'+c.id).innerHTML = q ? `${fmt(P(c)*q)}원<small>/월</small><em>${fmt(P(c))}원 × ${q}${c.unit}</em>` : '–';
     }
   });
+  CATALOG.forEach(c=>{ $('rp-'+c.id).textContent = `${fmt(P(c))}원 / ${c.unit}`; });
+  Object.keys(GROUPS).forEach(g=>{ const c = CATALOG.find(x=>x.group===g); $('grp-rp-'+g).textContent = `${fmt(P(c))}원 / ${c.unit}`; });
+  document.querySelectorAll('.tier').forEach(t=>t.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', (S.tier[t.dataset.tier]||'geo')===b.dataset.t)));
   Object.keys(GROUPS).forEach(g=>{
     const on = CATALOG.filter(c=>c.group===g && S.qty[c.id]>0), q = on.reduce((a,c)=>a+S.qty[c.id],0);
     $('gq-'+g).textContent = q ? on.map(c=>`${c.sub} ${S.qty[c.id]}`).join(' · ') : '선택 없음';
-    $('ga-'+g).innerHTML = q ? `${fmt(on.reduce((a,c)=>a+c.price*S.qty[c.id],0))}원<small>/월</small><em>총 ${q}건</em>` : '–';
+    $('ga-'+g).innerHTML = q ? `${fmt(on.reduce((a,c)=>a+P(c)*S.qty[c.id],0))}원<small>/월</small><em>총 ${q}건</em>` : '–';
     document.querySelector(`.grp[data-group="${g}"] .grp-h`).classList.toggle('off', !q);
   });
 
