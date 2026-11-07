@@ -96,6 +96,10 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s}
 .chip:hover{border-color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.chips.grouped{display:grid;gap:10px}
+.chip-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip-row>small{flex:0 0 64px;font-size:12px;color:var(--muted);font-weight:600}
+@media (max-width:560px){.chip-row>small{flex-basis:100%}}
 .chip em{font-style:normal;font-size:12px;opacity:.75;margin-left:4px}
 .ind{background:var(--surface-2);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;font-size:13.5px}
 .ind-r{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:baseline}
@@ -516,7 +520,8 @@ const VAT = 0.1, VALID_DAYS = 14;
 /* ===== 진단 문항 ===== */
 const Q = {
   // 11/6 회의: 마케팅 예산이 큰 B2B 영업 타깃부터 → 소매·매장형 → 업계(마케팅·미디어) 순
-  industry:{multi:false, opts:[['medical','메디컬'],['franchise','프랜차이즈'],['it','IT'],['edu','교육·강의'],['pro','전문직'],['commerce','커머스'],['local','소상공인'],['marketing','브랜딩·마케팅'],['media','미디어'],['etc','기타']]},
+  industry:{multi:false, opts:[['medical','메디컬'],['franchise','프랜차이즈'],['it','IT'],['edu','교육·강의'],['pro','전문직'],['commerce','커머스'],['local','소상공인'],['marketing','브랜딩·마케팅'],['media','미디어'],['etc','기타']],
+    groups:[['기업·기관',['medical','franchise','it','edu','pro']],['판매·매장',['commerce','local']],['업계·기타',['marketing','media','etc']]]},
   pain:{multi:false, opts:[['aimiss','AI 검색에 브랜드가 안 나옴'],['noinfo','브랜드를 설명할 자료가 부족'],['notrust','신뢰를 줄 기사·근거가 없음'],['noconv','노출은 되는데 문의로 안 이어짐'],['nohand','꾸준히 운영할 인력이 없음']]},
   goals:{multi:true, opts:[['ai','AI 답변에 브랜드 노출'],['trust','언론 노출로 신뢰 확보'],['lead','검색 유입·문의 증가'],['expert','대표 전문가 포지셔닝'],['video','영상으로 브랜드 알리기']]},
   stage:{multi:false, opts:[['none','콘텐츠가 거의 없음'],['blog','블로그·SNS 운영 중'],['press','기사·언론 노출 경험 있음']]},
@@ -638,7 +643,12 @@ function planName(){ return PACKAGES[S.pkg].name + (S.modified ? ' 기반 맞춤
 function buildChips(){
   document.querySelectorAll('.chips').forEach(box=>{
     const q = box.dataset.q;
-    box.innerHTML = Q[q].opts.map(o=>`<button type="button" class="chip" data-v="${o[0]}">${o[1]}${o[2]?`<em>${o[2]}</em>`:''}</button>`).join('');
+    const chip = o=>`<button type="button" class="chip" data-v="${o[0]}">${o[1]}${o[2]?`<em>${o[2]}</em>`:''}</button>`;
+    const grp = Q[q].groups;
+    box.classList.toggle('grouped', !!grp);
+    box.innerHTML = grp
+      ? grp.map(([t,ids])=>`<div class="chip-row"><small>${t}</small>${ids.map(id=>chip(Q[q].opts.find(o=>o[0]===id))).join('')}</div>`).join('')
+      : Q[q].opts.map(chip).join('');
     box.addEventListener('click', e=>{
       const b = e.target.closest('.chip'); if(!b) return;
       const v = b.dataset.v;
