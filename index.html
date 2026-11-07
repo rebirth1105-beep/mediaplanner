@@ -420,7 +420,7 @@ html{scroll-behavior:smooth}
       <button class="primary" id="btnPng2" type="button" hidden style="justify-self:stretch">미디어 플랜 이미지 저장</button>
       <button class="ghost only-full" type="button" data-go="quote">미디어 플랜 미리보기 ↓</button>
       <button class="primary only-present" type="button" data-go="quote" style="justify-self:stretch">구성 확정 · 미디어 플랜 보기 →</button>
-      <p class="fine">표시 단가는 VAT 별도 기준입니다. 패키지를 선택하면 AI 검색 노출 진단이 무상으로 포함됩니다.</p>
+      <p class="fine">표시 단가는 VAT 별도 기준입니다. 월 집행금액이 100만 원 이상이면 AI 검색 노출 진단(50만 원)이 무상으로 포함됩니다.</p>
     </aside>
   </div>
 </main>
@@ -472,9 +472,15 @@ const GEO_ADDS = {
   blog:['AI에게 실제로 묻는 질문형 키워드로 주제 선정','AI가 인용하기 좋은 구조 (핵심 요약 · Q&A 블록 · 출처 표기)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','발행 후 주요 AI 답변 반영 여부 점검'],
   article:['AI가 인용하기 좋은 기사 구조 (핵심 요약 · 팩트 박스)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','게재 후 주요 AI 답변 반영 여부 점검'],
 };
+/* ===== 11/6 회의 가격 규칙 ===== */
+// 블로그 건당 단가(일반 버전 기준)를 업종별로: 메디컬 7만 · 소상공인 3만 · 그 외 5만 (잠정)
+const BLOG_RATE = {medical:70000, local:30000};
+// 월 집행금액(할인 후, VAT 별도)이 이 금액 이상이면 AI 검색 노출 진단(50만) 무상
+const AUDIT_FREE_MIN = 1000000;
 const tierKey = c => c.group||c.id;
 const isGeo = c => !!c.geo && S.tier[tierKey(c)]!=='basic';    // 기본값은 GEO 최적화
-const P = c => isGeo(c) ? Math.round(c.price*(1+GEO_PREMIUM)/1000)*1000 : c.price;
+const base = c => c.group==='blog' ? (BLOG_RATE[S.industry]||c.price) : c.price;
+const P = c => isGeo(c) ? Math.round(base(c)*(1+GEO_PREMIUM)/1000)*1000 : base(c);
 const tierName = c => c.geo ? (isGeo(c) ? 'GEO 최적화' : '일반') : '';
 const tierSwitch = (key, label) => `<span class="tier" data-tier="${key}" role="group" aria-label="${label} 버전"><button type="button" data-t="basic">일반</button><button type="button" data-t="geo">GEO 최적화</button></span>`;
 /* ===== 묶음 항목: 상위 행 이름 (하위 항목은 CATALOG의 group 값으로 연결) ===== */
@@ -625,10 +631,10 @@ function recommend(){
 function calc(){
   const rate = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
   const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, name:c.name+(c.geo?` (${tierName(c)})`:''), desc:c.desc+(isGeo(c)?' · AI 인용 구조·반영 점검 포함':''), price:P(c), q:S.qty[c.id], amt:P(c)*S.qty[c.id]}));
-  const setup = CATALOG.filter(c=>c.type==='setup' && S.setup[c.id]).map(c=>({...c, q:1, amt:c.price, free: c.id==='audit' && S.pkg!=='custom'}));
   const mList = monthly.reduce((a,c)=>a+c.amt,0);
   const mDisc = r1000(mList*rate);
   const mNet = mList - mDisc;
+  const setup = CATALOG.filter(c=>c.type==='setup' && S.setup[c.id]).map(c=>({...c, q:1, amt:c.price, free: c.id==='audit' && mNet>=AUDIT_FREE_MIN}));
   const sList = setup.reduce((a,c)=>a+c.amt,0);
   const sFree = setup.filter(c=>c.free).reduce((a,c)=>a+c.amt,0);
   const sNet = sList - sFree;
@@ -779,7 +785,7 @@ function render(){
       $('chk-'+c.id).checked = !!S.setup[c.id] || !!by; $('chk-'+c.id).disabled = !!by;
       $('tl-'+c.id).textContent = by ? '홈페이지 제작에 포함' : '포함';
       row.classList.toggle('off', !S.setup[c.id] && !by);
-      $('a-'+c.id).innerHTML = by ? '포함' : !S.setup[c.id] ? '–' : c.id==='audit' ? `<s>${fmt(c.price)}</s>무상` : `${fmt(c.price)}원<small>1회</small>`;
+      $('a-'+c.id).innerHTML = by ? '포함' : !S.setup[c.id] ? '–' : c.id==='audit' && calc().mNet>=AUDIT_FREE_MIN ? `<s>${fmt(c.price)}</s>무상` : `${fmt(c.price)}원<small>1회</small>`;
     } else {
       const q = S.qty[c.id]||0;
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
@@ -803,7 +809,7 @@ function render(){
     ${k.mDisc?`<div class="line"><span>기간 할인 ${Math.round(k.rate*100)}%</span><span class="num neg">−${fmt(k.mDisc)}원</span></div>`:''}
     <div class="line"><span>월 운영비 × ${S.months}개월</span><span class="num">${fmt(k.mNet*S.months)}원</span></div>
     <div class="line"><span>초기 세팅비</span><span class="num">${fmt(k.sNet)}원</span></div>
-    ${k.sFree?`<div class="line"><span>패키지 혜택 (진단 무상)</span><span class="num neg">−${fmt(k.sFree)}원</span></div>`:''}
+    ${k.sFree?`<div class="line"><span>월 100만 원 이상 혜택 (진단 무상)</span><span class="num neg">−${fmt(k.sFree)}원</span></div>`:''}
     <div class="line"><span>공급가액</span><span class="num">${fmt(k.supply)}원</span></div>
     <div class="line"><span>VAT 10%</span><span class="num">${fmt(k.vat)}원</span></div>`;
   // 큰 숫자는 월 금액, 계약 총액은 보조 정보로
