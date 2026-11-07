@@ -98,8 +98,14 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .chips.grouped{display:grid;gap:10px}
 .chip-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.chip-row>small{flex:0 0 64px;font-size:12px;color:var(--muted);font-weight:600}
+.chip-row>small{flex:0 0 84px;font-size:12px;color:var(--muted);font-weight:600}
 @media (max-width:560px){.chip-row>small{flex-basis:100%}}
+.sub-q{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:var(--r);background:var(--surface-2)}
+.sub-q[hidden]{display:none}
+.sub-q>small{flex:0 0 72px;font-size:12px;color:var(--muted);font-weight:600}
+.sub-q .chips{flex:1}
+.sub-q .chip{padding:5px 12px;font-size:13px}
+@media (max-width:560px){.sub-q>small{flex-basis:100%}}
 .chip em{font-style:normal;font-size:12px;opacity:.75;margin-left:4px}
 .ind{background:var(--surface-2);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;font-size:13.5px}
 .ind-r{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:baseline}
@@ -375,6 +381,7 @@ html{scroll-behavior:smooth}
       <section class="step" id="s1">
         <div class="step-h"><span class="step-no">01</span><div><h2>브랜드 진단</h2><p>6개 질문으로 출발점을 정합니다.</p></div></div>
         <div class="q"><div class="q-label">업종 <span>업종에 따라 채널 구성과 체크포인트가 달라집니다</span></div><div class="chips" data-q="industry"></div>
+          <div class="sub-q" id="subQ"><small>세부 업종</small><div class="chips" data-q="sub"></div></div>
           <div class="ind" id="indCard"></div></div>
         <div class="q"><div class="q-label">지금 가장 큰 고민 <span>해결할 문제부터 처방에 반영합니다</span></div><div class="chips" data-q="pain"></div></div>
         <div class="q"><div class="q-label">이번 캠페인의 목표 <span>여러 개 선택 가능</span></div><div class="chips" data-q="goals"></div></div>
@@ -524,8 +531,9 @@ const VAT = 0.1, VALID_DAYS = 14;
 /* ===== 진단 문항 ===== */
 const Q = {
   // 11/6 회의: 마케팅 예산이 큰 B2B 영업 타깃부터 → 소매·매장형 → 업계(마케팅·미디어) 순
-  industry:{multi:false, opts:[['medical','메디컬'],['franchise','프랜차이즈'],['it','IT'],['edu','교육·강의'],['pro','전문직'],['commerce','커머스'],['local','소상공인'],['marketing','브랜딩·마케팅'],['media','미디어'],['etc','기타']],
-    groups:[['기업·기관',['medical','franchise','it','edu','pro']],['커머스·로컬',['commerce','local']],['마케팅·미디어',['marketing','media','etc']]]},
+  industry:{multi:false, opts:[['medical','메디컬'],['franchise','창업·프랜차이즈'],['it','IT'],['service','B2B·제조·서비스'],['edu','교육·강의'],['pro','전문직'],['commerce','커머스'],['local','소상공인'],['marketing','브랜딩·마케팅'],['media','미디어'],['etc','기타']],
+    groups:[['기업·기관',['medical','franchise','it','service','edu','pro']],['커머스·로컬',['commerce','local']],['마케팅·미디어',['marketing','media','etc']]]},
+  sub:{multi:false, opts:[]},   // 세부 업종: 업종을 고르면 SUBS에서 채움
   pain:{multi:false, opts:[['aimiss','AI 검색에 브랜드가 안 나옴'],['noinfo','브랜드를 설명할 자료가 부족'],['notrust','신뢰를 줄 기사·근거가 없음'],['noconv','노출은 되는데 문의로 안 이어짐'],['nohand','꾸준히 운영할 인력이 없음']]},
   goals:{multi:true, opts:[['ai','AI 답변에 브랜드 노출'],['trust','언론 노출로 신뢰 확보'],['lead','검색 유입·문의 증가'],['expert','대표 전문가 포지셔닝'],['video','영상으로 브랜드 알리기']]},
   stage:{multi:false, opts:[['none','콘텐츠가 거의 없음'],['blog','블로그·SNS 운영 중'],['press','기사·언론 노출 경험 있음']]},
@@ -555,6 +563,9 @@ const INDUSTRY = {
   media:{focus:['스레드','숏폼','대표 칼럼'], kpi:'“[분야] 볼 만한 매체·채널 추천” 질문에서 매체·채널명이 언급, 구독·제휴 문의 증가',
     caution:'타 매체 기사·영상 인용 시 저작권 확인, 출연자 초상권 동의, 광고·협찬 콘텐츠는 표시',
     add:[['threads',1,'구독자와 매일 만나는 접점 → 스레드 운영'],['shorts',1,'콘텐츠를 짧게 재가공해 유입 확대 → 숏폼 묶음',true],['column',1,'매체의 관점과 전문성을 기록 → 대표 칼럼 월 1편']], off:[]},
+  service:{focus:['네이버 플레이스','네이버 블로그','시공·포트폴리오 사례'], kpi:'“[지역] [서비스] 업체 추천” 질문에서 회사명이 언급, 견적·상담 문의 증가',
+    caution:'시공·작업 사례 사진은 고객 동의 후 사용, 최저가·무료 등 비교 표현은 근거 확보',
+    add:[['blog',25,'작업 사례가 곧 신뢰 → 블로그 월 25건'],['faq',6,'견적·비용·기간 질문 → Q&A 콘텐츠 월 6건']], off:[]},
   it:{focus:['보도자료','언론 송출','대표 칼럼'], kpi:'“[업무] 솔루션 추천·국내 대표 기업” 질문에서 회사명이 언급, 도입 문의 증가',
     caution:'도입 사례·고객사 로고 사용 전 고객사 동의, 수치 성과는 근거 자료 확보',
     add:[['press',2,'도입 사례·수주 소식이 신뢰 근거 → 보도자료 월 2건'],['pressP',1,'업계 매체 노출 확대 → 제휴 매체 보도자료 월 1건',true],['column',1,'의사결정자 설득 → 대표 칼럼 월 1편'],['faq',6,'솔루션 비교 질문 → Q&A 콘텐츠 월 6건']],
@@ -575,6 +586,73 @@ const PAIN = {
   noconv:{add:[['faq',6,'구매·상담 직전에 찾는 질문에 답 → Q&A 콘텐츠 월 6건'],['card',1,'핵심 정보를 한눈에 → 카드뉴스 월 1세트']]},
   nohand:{add:[['threads',1,'매일 꾸준한 접점을 대행 → 스레드 운영 월 30건']]},
 };
+/* ===== 세부 업종별 채널 중요도 (김민승 대표 「업종별_마케팅중요도_v1_2026-11-06」 시트, 1 필수 · 2 핵심 · 3 권장 · 4 선택 · 5 보류, '-' 해당 없음)
+   문자열의 n번째 글자 = subs의 n번째 세부 업종. 시트가 바뀌면 이 표만 고치면 됨 ===== */
+const SUBS = {
+  medical:{subs:[['ortho','정형외과'],['obgy','산부인과'],['eye','안과'],['dental','치과'],['korean','한의원'],['derma','피부과'],['plastic','성형외과'],['clinic','그 외 병의원']], ch:{
+    '네이버 플레이스':'11111111','구글맵':'11111111','카카오맵':'22222222','체험단 블로그':'34222124','체험단 릴스':'44333115','맘카페·지역 커뮤니티':'21222222',
+    '인스타 릴스':'33223114','인스타 피드':'43323114','네이버 클립':'23222113','네이버 블로그':'11111112','티스토리':'22222222','스레드':'22222222','홈페이지':'11111111',
+    '보도자료':'33333333','인터뷰 기사':'22222222','칼럼':'11111111','검색광고':'23112114','롱폼 유튜브':'11111111','의료광고 심의 대응':'11111111','후기 관리':'11111111'}},
+  franchise:{subs:[['consult','창업 컨설팅·중개'],['hq','가맹본부·브랜드 확장'],['school','창업 교육·훈련']], ch:{
+    '네이버 플레이스':'232','구글맵':'343','카카오맵':'343','체험단 블로그':'555','체험단 릴스':'555','맘카페·지역 커뮤니티':'353','인스타 릴스':'232','인스타 피드':'232',
+    '네이버 클립':'453','네이버 블로그':'111','티스토리':'333','스레드':'232','홈페이지':'111','보도자료':'323','인터뷰 기사':'222','칼럼':'111','검색광고':'121',
+    '메타 광고':'232','롱폼 유튜브':'221','가맹 모집 랜딩':'41-','창업 상담 랜딩':'134','교육 신청 랜딩':'-41','상담 DB·후속 관리':'111','브랜드 제안서':'314',
+    '창업박람회':'213','설명회·세미나':'221','기업·기관 제휴':'412'}},
+  service:{subs:[['b2c','생활 서비스 (개인 고객)'],['lb2b','기업 대상 서비스'],['plant','설비·제조']], ch:{
+    '네이버 플레이스':'112','구글맵·카카오맵':'223','체험단 블로그':'235','체험단 릴스':'345','맘카페·지역 커뮤니티':'135','인스타 릴스':'224','인스타 피드':'224',
+    '네이버 클립':'224','네이버 블로그':'112','티스토리':'444','스레드':'234','홈페이지':'211','보도자료':'432','인터뷰 기사':'333','칼럼':'532','검색광고':'211',
+    '롱폼 유튜브':'233','포트폴리오·시공사례':'111','제안서':'421'}},
+  edu:{subs:[['academy','학원'],['solo','1인 강사·클래스'],['cert','자격·직무교육']], ch:{
+    '네이버 플레이스':'123','구글맵':'234','카카오맵':'344','체험단 블로그':'324','체험단 릴스':'434','맘카페·지역 커뮤니티':'134','인스타 릴스':'313','인스타 피드':'323',
+    '네이버 클립':'323','네이버 블로그':'111','티스토리':'322','스레드':'423','홈페이지':'221','보도자료':'322','인터뷰 기사':'222','칼럼':'311','검색광고':'231',
+    '롱폼 유튜브':'422','수강 후기':'111','설명회':'132','스터디 콘텐츠':'322'}},
+  pro:{subs:[['b2c','개인 고객 (B2C)'],['b2b','기업 고객 (B2B)'],['both','개인·기업 모두']], ch:{
+    '네이버 플레이스':'232','구글맵·카카오맵':'333','체험단 블로그':'454','체험단 릴스':'555','맘카페·지역 커뮤니티':'444','인스타 릴스':'232','인스타 피드':'242',
+    '네이버 클립':'454','네이버 블로그':'111','티스토리':'333','스레드':'131','홈페이지':'111','보도자료':'322','인터뷰 기사':'222','칼럼':'111','검색광고':'111',
+    '옥외광고':'222','롱폼 유튜브':'121','사례·칼럼 신뢰 콘텐츠':'111'}},
+  commerce:{subs:[['market','오픈마켓 소매'],['own','자사몰'],['agency','구매대행·직구'],['whole','도매·납품']], ch:{
+    '체험단 블로그':'1241','체험단 릴스':'1141','맘카페·지역 커뮤니티':'2244','인스타 릴스':'1142','인스타 피드':'2143','네이버 클립':'1243','네이버 블로그':'2232',
+    '티스토리':'4444','스레드':'2133','홈페이지':'5152','보도자료':'3353','인터뷰 기사':'3353','칼럼':'4454','검색광고':'1112','롱폼 유튜브':'3253',
+    '상세페이지':'1134','리뷰 관리':'1113','오픈마켓 내부광고':'1-1-','라이브커머스':'224-','공구·인플루언서':'2244','메타 광고':'2133','카카오 선물하기·톡채널':'313-',
+    '도매몰·B2B 플랫폼':'---1','카탈로그·제안서':'-4-1','전시회·박람회':'-4-2'}},
+  local:{subs:[['food','요식업 일반'],['cafe','카페·브런치'],['delivery','배달형'],['beauty','미용·서비스']], ch:{
+    '네이버 플레이스':'1131','배달앱':'331-','구글맵':'1131','카카오맵':'2232','체험단 블로그':'1121','체험단 릴스':'1121','맘카페·지역 커뮤니티':'3233',
+    '인스타 릴스':'2221','인스타 피드':'3331','네이버 클립':'1131','네이버 블로그':'3343','티스토리':'4444','스레드':'1121','홈페이지':'4444',
+    '보도자료':'4443','인터뷰 기사':'5553','칼럼':'5553','검색광고':'3333','롱폼 유튜브':'5555'}},
+};
+const LV = ['','필수','핵심','권장','선택','보류'];
+// 시트 채널 → 플래너 항목. full: 필수(1) 최소 수량, base: 핵심(2) 최소 수량(Starter 제외), 4·5(선택·보류)면 제외
+const CH_MAP = [
+  {ch:['네이버 블로그'], id:'blog', full:25, base:15, label:'네이버 블로그'},
+  {ch:['티스토리'], id:'tistory', full:10, base:5, label:'티스토리'},
+  {ch:['스레드'], id:'threads', full:1, base:1, label:'스레드 운영'},
+  {ch:['인스타 릴스','인스타 피드'], id:'insta', full:1, base:1, label:'인스타그램 운영'},
+  {ch:['인스타 릴스','네이버 클립'], id:'shorts', full:1, base:0, label:'숏폼 묶음', growthUp:true},
+  {ch:['롱폼 유튜브'], id:'youtube', full:0, base:0, label:'롱폼 영상', premiumOnly:true},
+  {ch:['인터뷰 기사'], id:'brand', full:1, base:1, label:'브랜드 인터뷰 기사'},
+  {ch:['칼럼'], id:'column', full:1, base:1, label:'전문가 칼럼'},
+  {ch:['보도자료'], id:'press', full:2, base:1, label:'보도자료', alsoOff:['pressP','pressM']},
+];
+const indLabel = () => { const s = subOf(); return label('industry',S.industry) + (s ? ' · '+s.name : ''); };
+const subOf = () => { const d = SUBS[S.industry]; if(!d) return null; const i = Math.max(0, d.subs.findIndex(s=>s[0]===S.sub)); return {d, i, name:d.subs[i][1]}; };
+const imp = (d,i,names) => { const v = names.map(n=>Number((d.ch[n]||'')[i])).filter(x=>x>=1); return v.length ? Math.min(...v) : 0; };
+function applySub(key, why){
+  const s = subOf(); if(!s) return false;
+  const tag = t => `[${s.name}] `+t;
+  CH_MAP.forEach(m=>{
+    const lv = imp(s.d, s.i, m.ch); if(!lv) return;
+    const nm = m.ch.join('·');
+    if(lv>=4){ [m.id, ...(m.alsoOff||[])].forEach(id=>{ if(S.qty[id]){ S.qty[id]=0; if(id===m.id) why.push(tag(`${nm} ${LV[lv]}(${lv}) → ${m.label} 제외`)); } }); return; }
+    if(m.premiumOnly){ if(lv===1 && !S.qty[m.id]) why.push(tag(`${nm} 필수(1) → ${m.label}은 Premium에 포함, 예산 여유 시 추가 권장`)); return; }
+    const n = lv===1 ? m.full : lv===2 ? m.base : 0;
+    if(!n || (key==='starter' && (lv===2 || m.growthUp))) return;
+    if((S.qty[m.id]||0) < n){ S.qty[m.id] = n; const c = byId(m.id); why.push(tag(`${nm} ${LV[lv]}(${lv}) → ${m.label}${c.unit==='식'?'':' 월 '+n+c.unit}`)); }
+  });
+  const web = imp(s.d, s.i, ['홈페이지']);
+  if(web===1 && !S.setup.schema){ S.setup.schema = true; why.push(tag('홈페이지 필수(1) → 구조화 데이터 세팅 (홈페이지가 없으면 제작 선택)')); }
+  return true;
+}
+const subFocus = () => { const s = subOf(); if(!s) return null; return Object.keys(s.d.ch).filter(n=>Number(s.d.ch[n][s.i])===1 && !(S.industry==='medical' && /체험단/.test(n))); };   // 병의원 체험단은 의료법상 유인·알선 소지 → 핵심 채널 표시에서 제외
 const QUESTIONS = {
   marketing:['[업종] 마케팅 잘하는 대행사 추천해줘','[분야] 브랜드 홍보는 어느 에이전시에 맡기면 좋아?','[회사명]은 어떤 프로젝트를 했어?'],
   media:['[분야] 볼 만한 매체·채널 추천해줘','[주제] 소식은 어디서 보는 게 좋아?','[매체명]은 어떤 콘텐츠를 다뤄?'],
@@ -583,6 +661,7 @@ const QUESTIONS = {
   edu:['[분야] 강의 잘하는 강사 추천해줘','[주제]로 기업 강연 섭외할 만한 사람은?','[강사명]은 어떤 강의를 해?'],
   commerce:['[카테고리] 가성비 좋은 브랜드 추천해줘','[제품군] 성분 괜찮은 제품 뭐가 있어?','[브랜드명] 실제 후기는 어때?'],
   it:['[업무] 자동화 솔루션 추천해줘','[분야] 국내 대표 IT 기업은 어디야?','[회사명]은 어떤 서비스를 하는 회사야?'],
+  service:['[지역] [서비스] 잘하는 업체 추천해줘','[서비스] 견적은 보통 얼마야?','[회사명] 시공 후기는 어때?'],
   local:['[지역] [업종] 맛집·매장 추천해줘','[지역] 주차 편한 [업종] 어디야?','[매장명] 실제 후기는 어때?'],
   franchise:['[업종] 프랜차이즈 창업 추천해줘','[브랜드] 가맹 조건은 괜찮아?','[지역]에서 [업종] 창업하려면 어디가 좋아?'],
   etc:['[분야] 잘하는 곳 추천해줘','[고민]을 해결하려면 어떤 서비스를 써야 해?','[브랜드명]은 믿을 만해?'],
@@ -590,7 +669,7 @@ const QUESTIONS = {
 
 /* ===== 상태 (처음 열면 예시 진단으로 채워진 상태) ===== */
 const S = {
-  industry:'edu', pain:'aimiss', goals:new Set(['ai','expert']), stage:'blog', budget:'mid', months:6,
+  industry:'edu', sub:'solo', pain:'aimiss', goals:new Set(['ai','expert']), stage:'blog', budget:'mid', months:6,
   pkg:'growth', rec:'growth', modified:false, qty:{}, setup:{}, tier:{}, reasons:[],
 };
 const byId = id => CATALOG.find(c=>c.id===id);
@@ -608,9 +687,11 @@ function recommend(){
   const key = {low:'starter', mid:'growth', high:'premium'}[S.budget];
   loadPackage(key); S.rec = key;
   const why = [`${label('budget',S.budget)} 예산 → ${PACKAGES[key].name} 플랜`];
-  const ind = INDUSTRY[S.industry], tag = s => `[${label('industry',S.industry)}] `+s;
-  ind.off.forEach(([id,r])=>{ if(S.qty[id]){ S.qty[id] = 0; why.push(tag(r)); } });
-  ind.add.forEach(([id,n,r,notLow])=>{ if(notLow && key==='starter') return; if((S.qty[id]||0)<n){ S.qty[id] = n; why.push(tag(r)); } });
+  const ind = INDUSTRY[S.industry], tag = s => `[${indLabel()}] `+s;
+  if(!applySub(key, why)){   // 시트에 없는 업종(IT·마케팅·미디어·기타)은 기존 규칙
+    ind.off.forEach(([id,r])=>{ if(S.qty[id]){ S.qty[id] = 0; why.push(tag(r)); } });
+    ind.add.forEach(([id,n,r,notLow])=>{ if(notLow && key==='starter') return; if((S.qty[id]||0)<n){ S.qty[id] = n; why.push(tag(r)); } });
+  }
   // 고민 해결 항목은 업종 규칙으로 빠졌더라도 다시 넣는다 (문제 해결이 우선)
   const pain = PAIN[S.pain], ptag = s => `[고민] `+s;
   (pain.setup||[]).forEach(([id,r])=>{ if(!S.setup[id]){ S.setup[id] = true; why.push(ptag(r)); } });
@@ -645,6 +726,13 @@ function calc(){
 function planName(){ return PACKAGES[S.pkg].name + (S.modified ? ' 기반 맞춤' : ''); }
 
 /* ===== 화면 만들기 ===== */
+function buildSub(){
+  const d = SUBS[S.industry], box = document.querySelector('.chips[data-q="sub"]');
+  Q.sub.opts = d ? d.subs : [];
+  if(!d || !Q.sub.opts.some(o=>o[0]===S.sub)) S.sub = d ? d.subs[0][0] : '';
+  $('subQ').hidden = !d;
+  box.innerHTML = Q.sub.opts.map(o=>`<button type="button" class="chip" data-v="${o[0]}">${o[1]}</button>`).join('');
+}
 function buildChips(){
   document.querySelectorAll('.chips').forEach(box=>{
     const q = box.dataset.q;
@@ -659,11 +747,13 @@ function buildChips(){
       const v = b.dataset.v;
       if(q==='goals'){ S.goals.has(v) ? S.goals.delete(v) : S.goals.add(v); }
       else S[q] = q==='months' ? Number(v) : v;
+      if(q==='industry') buildSub();
       // 수량을 직접 손대기 전이면 진단을 바꾸는 즉시 구성도 다시 처방
       if(q!=='months' && !S.modified) recommend();
       render();
     });
   });
+  buildSub();
   $('sSeg').innerHTML = PERIODS.map(p=>`<button type="button" data-m="${p.m}">${p.m}개월<small>${p.r?'−'+Math.round(p.r*100)+'%':'기본'}</small></button>`).join('');
   $('sSeg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; S.months=Number(b.dataset.m); render(); });
 }
@@ -761,7 +851,7 @@ function render(){
   });
   const ind = INDUSTRY[S.industry];
   $('indCard').innerHTML = `
-    <div class="ind-r"><span>핵심 채널</span><span class="tags">${ind.focus.map(f=>`<b>${f}</b>`).join('')}</span></div>
+    <div class="ind-r"><span>핵심 채널</span><span class="tags">${(subFocus()||ind.focus).map(f=>`<b>${f}</b>`).join('')}</span></div>
     <div class="ind-r"><span>목표 지표</span><span>${ind.kpi}</span></div>
     <div class="ind-r"><span>체크포인트</span><span class="warn">${ind.caution}</span></div>`;
   document.querySelectorAll('#sSeg button').forEach(b=>b.setAttribute('aria-pressed', Number(b.dataset.m)===S.months));
@@ -855,7 +945,7 @@ function renderQuote(k){
     </div>
     <div class="q-hero"><div><small>제안 미디어 플랜</small><b>${esc(client||'브랜드')} GEO 미디어 플랜 · ${planName()}</b></div><div class="amt"><small>월 집행금액 (VAT 별도)</small><b>${fmt(k.mNet)}원</b><small style="margin-top:2px">${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)</small></div></div>
     <div class="q-sec"><h3>DIAGNOSIS</h3><div class="q-diag">
-      <div><small>업종</small>${label('industry',S.industry)}</div>
+      <div><small>업종</small>${indLabel()}</div>
       <div><small>현재 상황</small>${label('stage',S.stage)}</div>
       <div><small>예산 범위</small>${label('budget',S.budget)}</div>
       <div><small>월 발행량</small>${k.count}건 (총 ${k.count*S.months}건)</div>
@@ -881,8 +971,8 @@ function renderQuote(k){
       <div><h3>TARGET AI QUESTIONS</h3><ul class="q-qs">${QUESTIONS[S.industry].map(q=>`<li>“${q}”</li>`).join('')}</ul>
         <p style="margin:6px 0 0;font-size:11px;color:#5B6890">진단 단계에서 실제 브랜드 기준 질문 30개로 확정합니다.</p></div>
     </div>
-    <div class="q-sec"><h3>INDUSTRY STRATEGY · ${label('industry',S.industry)}</h3><ul class="q-list">
-      <li><b>핵심 채널</b><span>${INDUSTRY[S.industry].focus.join(' · ')}</span></li>
+    <div class="q-sec"><h3>INDUSTRY STRATEGY · ${indLabel()}</h3><ul class="q-list">
+      <li><b>핵심 채널</b><span>${(subFocus()||INDUSTRY[S.industry].focus).join(' · ')}</span></li>
       <li><b>목표 지표</b><span>${INDUSTRY[S.industry].kpi}</span></li>
       <li><b>체크포인트</b><span>${INDUSTRY[S.industry].caution}</span></li></ul></div>
     <div class="q-sec"><h3>WHY THIS PLAN</h3><ul class="q-why">${S.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>
@@ -980,7 +1070,7 @@ document.addEventListener('click', e=>{
 function loadingSteps(){
   const goals = [...S.goals].map(g=>label('goals',g));
   return [
-    `${label('industry',S.industry)} 업종의 핵심 채널과 고객 질문 유형을 확인하고 있어요`,
+    `${indLabel()} 업종의 핵심 채널과 고객 질문 유형을 확인하고 있어요`,
     goals.length ? `‘${goals[0]}’${goals.length>1?` 외 ${goals.length-1}개`:''} 목표에 맞는 콘텐츠를 고르고 있어요` : '캠페인 목표에 맞는 콘텐츠를 고르고 있어요',
     `‘${label('pain',S.pain)}’ 고민과 현재 상황(${label('stage',S.stage)})으로 시작점을 잡고 있어요`,
     `${label('budget',S.budget)} · ${S.months}개월 기준으로 구성과 금액을 맞추고 있어요`,
