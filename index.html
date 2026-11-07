@@ -464,11 +464,6 @@ const CATALOG = [
   {id:'pressP', cat:'언론 노출', geo:'article', name:'보도자료 · 제휴 매체', desc:'사실기사 형식 원고 작성 · 제휴 언론사 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
   {id:'pressM', cat:'언론 노출', geo:'article', name:'보도자료 · 메이저 언론', desc:'사실기사 형식 원고 작성 · 메이저 언론사 게재', unit:'건', price:450000, type:'monthly', max:4, content:true},
   {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
-  // 단기 광고 (11/6 회의: GEO는 장기, 당장 유입은 광고로 병행 · 화면 맨 뒤 배치) — 플레이스는 회의안, 파워링크는 조사안 임시 단가 → 광고 파트너 상품 받으면 교체
-  {id:'placeSet', cat:'단기 광고 · 빠른 유입', name:'지도 플레이스 GEO 세팅', desc:'네이버·구글·카카오맵·T맵 업체 정보 통일 · 키워드·사진·메뉴 등록', unit:'1회', price:1200000, type:'setup'},
-  {id:'place',    cat:'단기 광고 · 빠른 유입', name:'플레이스 운영', desc:'키워드 교체·소식 등록·리뷰 응대 가이드', unit:'월', price:300000, type:'monthly', max:1},
-  {id:'adSet',    cat:'단기 광고 · 빠른 유입', name:'검색광고 세팅 (네이버 파워링크·구글)', desc:'키워드 설계·광고 문구·계정 세팅 (계정은 고객 명의)', unit:'1회', price:300000, type:'setup'},
-  {id:'ads',      cat:'단기 광고 · 빠른 유입', name:'검색광고 운영 컨설팅', desc:'키워드·입찰·문구 관리, 월간 성과 리포트 · 광고비는 고객 직접 결제(별도)', unit:'월', price:300000, type:'monthly', max:1},
 ];
 /* ===== 일반 / GEO 최적화 버전: geo 값이 있는 항목은 버전 선택 가능, GEO는 일반 단가 + 40% (임시) ===== */
 const GEO_PREMIUM = 0.4;
@@ -517,10 +512,6 @@ const INFO = {
   pressP:{what:'회사 소식을 사실 기사 형식으로 작성해 제휴 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','제휴 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'게재 매체와 일정은 매체 사정에 따라 달라질 수 있습니다.', cases:[]},
   pressM:{what:'회사 소식을 사실 기사 형식으로 작성해 메이저 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','메이저 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'매체별 단가가 달라 매체에 따라 금액이 추가될 수 있습니다.', cases:[]},
   report:{what:'매월 같은 질문 세트로 AI 답변을 다시 확인해 변화를 추적합니다.', scope:['브랜드 언급률 추적','경쟁사 비교','다음 달 질문·콘텐츠 조정'], out:'월간 리포트', cases:[]},
-  placeSet:{what:'지도 앱마다 다르게 적힌 업체 정보를 하나로 맞추고, 검색에 걸릴 키워드로 다시 등록합니다.', scope:['네이버·구글·카카오맵·T맵 정보 통일 (업체명·주소·전화번호)','대표 키워드 분석·등록','사진·메뉴·영업시간 정리'], out:'4개 지도 세팅 완료 + 세팅 내역서', note:'지도 정보가 모두 같아야 AI가 믿을 만한 업체로 판단합니다. 등록 자체는 무료이며, 비용은 GEO 기준의 정보 설계·세팅 작업비입니다.', cases:[]},
-  place:{what:'세팅한 플레이스가 계속 상위에 보이도록 매월 관리합니다.', scope:['시즌·트렌드에 맞춘 키워드 교체','구글 비즈니스 소식 등록','리뷰 응대 문구 가이드'], out:'월간 관리 리포트', note:'리뷰 작성 대행은 하지 않습니다.', cases:[]},
-  adSet:{what:'돈을 넣은 날부터 바로 노출되는 검색광고를 세팅합니다. GEO 성과가 쌓이는 동안 문의를 만드는 역할입니다.', scope:['업종·지역 키워드 설계','광고 문구·연결 페이지 점검','네이버 파워링크·구글 검색광고 계정 세팅 (고객 명의)'], out:'세팅 완료 + 키워드 설계표', note:'광고비는 고객이 직접 결제하며 견적에 포함되지 않습니다.', cases:[]},
-  ads:{what:'광고비가 새지 않도록 매월 키워드와 입찰가를 조정합니다.', scope:['키워드·입찰가·문구 조정','효율 낮은 키워드 정리','월간 클릭·문의 리포트'], out:'월간 성과 리포트', note:'광고비는 고객 직접 결제(별도)입니다. 대행 수수료가 아닌 세팅·운영 컨설팅 용역비입니다.', cases:[]},
 };
 const PACKAGES = {
   starter:{name:'Starter', desc:'블로그와 스레드로 검색에 잡히는 기본기를 쌓습니다', items:{blog:25,threads:1,press:1,report:1}, setup:['audit']},
@@ -627,7 +618,7 @@ function recommend(){
   if(S.goals.has('expert')){ const n = key==='premium'?2:1; if(S.qty.column<n){S.qty.column=n;} why.push('대표 전문가 포지셔닝 → 전문가 칼럼 월 '+S.qty.column+'편'); }
   if(S.goals.has('trust') && S.qty.brand<1){ S.qty.brand=1; why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 추가'); }
   else if(S.goals.has('trust')) why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 포함');
-  if(S.goals.has('lead') || S.pain==='noconv') why.push('[단기] GEO 성과가 쌓이는 3~6개월 동안 문의 공백 → 검색광고·플레이스 병행 검토 (광고비 별도)');
+  if(S.goals.has('lead') || S.pain==='noconv') why.push('[단기] GEO 성과가 쌓이는 3~6개월 동안 문의 공백 → 검색광고·플레이스는 「광고 진단」에서 별도 설계');
   if(S.goals.has('lead')){ if(!S.qty.insta){ S.qty.insta = 1; why.push('검색 유입·문의 확대 → 인스타그램 운영 추가'); } else why.push('검색 유입·문의 확대 → 블로그 월 25건 + 인스타그램으로 접점 확보'); }
   if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push('영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포'); }
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
