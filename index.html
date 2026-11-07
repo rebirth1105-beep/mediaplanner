@@ -385,7 +385,9 @@ html{scroll-behavior:smooth}
           <div class="ind" id="indCard"></div></div>
         <div class="q"><div class="q-label">지금 가장 큰 고민 <span>해결할 문제부터 처방에 반영합니다</span></div><div class="chips" data-q="pain"></div></div>
         <div class="q"><div class="q-label">이번 캠페인의 목표 <span>여러 개 선택 가능</span></div><div class="chips" data-q="goals"></div></div>
-        <div class="q"><div class="q-label">현재 콘텐츠 상황</div><div class="chips" data-q="stage"></div></div>
+        <div class="q"><div class="q-label">현재 콘텐츠 상황 <span>운영 중인 채널은 여러 개 선택</span></div>
+          <div class="chip-row"><small>양</small><div class="chips" data-q="stage"></div></div>
+          <div class="chip-row"><small>운영 중</small><div class="chips" data-q="have"></div></div></div>
         <div class="q"><div class="q-label">월 마케팅 예산</div><div class="chips" data-q="budget"></div></div>
         <div class="q"><div class="q-label">운영 기간 <span>길수록 기간 할인이 커집니다</span></div><div class="chips" data-q="months"></div></div>
         <button class="primary" id="btnRecommend" type="button">진단 결과로 프로그램 처방하기 →</button>
@@ -536,7 +538,8 @@ const Q = {
   sub:{multi:false, opts:[]},   // 세부 업종: 업종을 고르면 SUBS에서 채움
   pain:{multi:false, opts:[['aimiss','AI 검색에 브랜드가 안 나옴'],['noinfo','브랜드를 설명할 자료가 부족'],['notrust','신뢰를 줄 기사·근거가 없음'],['noconv','노출은 되는데 문의로 안 이어짐'],['nohand','꾸준히 운영할 인력이 없음']]},
   goals:{multi:true, opts:[['ai','AI 답변에 브랜드 노출'],['trust','언론 노출로 신뢰 확보'],['lead','검색 유입·문의 증가'],['expert','대표 전문가 포지셔닝'],['video','영상으로 브랜드 알리기']]},
-  stage:{multi:false, opts:[['none','콘텐츠가 거의 없음'],['blog','블로그·SNS 운영 중'],['press','기사·언론 노출 경험 있음']]},
+  stage:{multi:false, opts:[['none','거의 없음'],['some','조금 있음'],['many','꾸준히 쌓임']]},
+  have:{multi:true, opts:[['blog','블로그'],['insta','인스타그램'],['threads','스레드'],['youtube','유튜브'],['web','홈페이지'],['press','기사·언론']]},
   budget:{multi:false, opts:[['low','월 300만 원 미만'],['mid','월 300~700만 원'],['high','월 700만 원 이상']]},
   months:{multi:false, opts:PERIODS.map(p=>[String(p.m), p.m+'개월', p.r?'−'+Math.round(p.r*100)+'%':''])},
 };
@@ -643,16 +646,40 @@ function applySub(key, why){
     const lv = imp(s.d, s.i, m.ch); if(!lv) return;
     const nm = m.ch.join('·');
     if(lv>=4){ [m.id, ...(m.alsoOff||[])].forEach(id=>{ if(S.qty[id]){ S.qty[id]=0; if(id===m.id) why.push(tag(`${nm} ${LV[lv]}(${lv}) → ${m.label} 제외`)); } }); return; }
-    if(m.premiumOnly){ if(lv===1 && !S.qty[m.id]) why.push(tag(`${nm} 필수(1) → ${m.label}은 Premium에 포함, 예산 여유 시 추가 권장`)); return; }
+    if(m.premiumOnly){ if(lv===1 && !S.qty[m.id] && S.have.has('youtube')) why.push(tag(`${nm} 필수(1) → ${m.label}은 Premium에 포함, 예산 여유 시 추가 권장`)); return; }
     const n = lv===1 ? m.full : lv===2 ? m.base : 0;
     if(!n || (key==='starter' && (lv===2 || m.growthUp))) return;
     if((S.qty[m.id]||0) < n){ S.qty[m.id] = n; const c = byId(m.id); why.push(tag(`${nm} ${LV[lv]}(${lv}) → ${m.label}${c.unit==='식'?'':' 월 '+n+c.unit}`)); }
   });
   const web = imp(s.d, s.i, ['홈페이지']);
-  if(web===1 && !S.setup.schema){ S.setup.schema = true; why.push(tag('홈페이지 필수(1) → 구조화 데이터 세팅 (홈페이지가 없으면 제작 선택)')); }
+  if(web===1 && S.have.has('web') && !S.setup.schema){ S.setup.schema = true; why.push(tag('홈페이지 필수(1) → 기존 홈페이지 구조화 데이터 세팅')); }
   return true;
 }
 const subFocus = () => { const s = subOf(); if(!s) return null; return Object.keys(s.d.ch).filter(n=>Number(s.d.ch[n][s.i])===1 && !(S.industry==='medical' && /체험단/.test(n))); };   // 병의원 체험단은 의료법상 유인·알선 소지 → 핵심 채널 표시에서 제외
+/* ===== 운영 중인 채널 체크 → 빠진 채널 짚기 / 운영 중 채널은 이어서 운영 (11/6 회의) ===== */
+const HAVE = {
+  blog:{ch:['네이버 블로그'], name:'블로그', tip:'블로그 개설·세팅부터 (개설 비용 없음)'},
+  insta:{ch:['인스타 릴스','인스타 피드'], name:'인스타그램', tip:'인스타그램 계정 세팅·운영'},
+  threads:{ch:['스레드'], name:'스레드', tip:'스레드 계정 세팅·운영'},
+  youtube:{ch:['롱폼 유튜브'], name:'유튜브', tip:'롱폼 영상 1~2편이라도 시작 (AI가 영상 설명·자막도 참고)'},
+  web:{ch:['홈페이지'], name:'홈페이지', tip:'GEO·SEO 홈페이지 제작 검토'},
+  press:{ch:['보도자료','인터뷰 기사','칼럼'], name:'기사·언론', tip:'브랜드 인터뷰 기사로 첫 공식 기록 만들기'},
+};
+const stageLabel = () => label('stage',S.stage) + (S.have.size ? ' · 운영 중: '+[...S.have].map(k=>HAVE[k].name).join('·') : '');
+function haveCheck(why){
+  const s = subOf();
+  if(s){
+    Object.entries(HAVE).forEach(([k,c])=>{
+      if(S.have.has(k)) return;
+      const lv = imp(s.d, s.i, c.ch);
+      if(lv===1 || lv===2) why.push(`[${s.name}] ${c.name} ${LV[lv]}(${lv})인데 운영 안 함 → ${c.tip}`);
+    });
+  }
+  if(S.have.has('press')) why.push('기존 기사 보유 → 제휴·메이저 매체 보도자료로 노출 범위 확대 가능');
+  const keep = [...S.have].filter(k=>k!=='press' && k!=='web').map(k=>HAVE[k].name);
+  if(keep.length) why.push(`운영 중: ${keep.join('·')} → 기존 계정 이어서 운영 (신규 개설 비용 없음)`);
+  if(S.have.has('web') && S.setup.web){ S.setup.web = false; why.push('홈페이지 보유 → 새로 만들지 않고 구조화 데이터 세팅으로 수정'); if(!S.setup.schema) S.setup.schema = true; }
+}
 const QUESTIONS = {
   marketing:['[업종] 마케팅 잘하는 대행사 추천해줘','[분야] 브랜드 홍보는 어느 에이전시에 맡기면 좋아?','[회사명]은 어떤 프로젝트를 했어?'],
   media:['[분야] 볼 만한 매체·채널 추천해줘','[주제] 소식은 어디서 보는 게 좋아?','[매체명]은 어떤 콘텐츠를 다뤄?'],
@@ -669,7 +696,7 @@ const QUESTIONS = {
 
 /* ===== 상태 (처음 열면 예시 진단으로 채워진 상태) ===== */
 const S = {
-  industry:'edu', sub:'solo', pain:'aimiss', goals:new Set(['ai','expert']), stage:'blog', budget:'mid', months:6,
+  industry:'edu', sub:'solo', pain:'aimiss', goals:new Set(['ai','expert']), stage:'some', have:new Set(['blog']), budget:'mid', months:6,
   pkg:'growth', rec:'growth', modified:false, qty:{}, setup:{}, tier:{}, reasons:[],
 };
 const byId = id => CATALOG.find(c=>c.id===id);
@@ -704,7 +731,8 @@ function recommend(){
   if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push('영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포'); }
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
   if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
-  if(S.stage==='press') why.push('기존 기사 보유 → 제휴·메이저 매체 보도자료로 노출 범위 확대 가능');
+  if(S.stage==='many') why.push('기존 콘텐츠가 쌓여 있음 → 기존 글을 GEO 구조로 정비하며 이어서 발행');
+  haveCheck(why);
   S.reasons = why;
 }
 
@@ -745,7 +773,7 @@ function buildChips(){
     box.addEventListener('click', e=>{
       const b = e.target.closest('.chip'); if(!b) return;
       const v = b.dataset.v;
-      if(q==='goals'){ S.goals.has(v) ? S.goals.delete(v) : S.goals.add(v); }
+      if(Q[q].multi){ S[q].has(v) ? S[q].delete(v) : S[q].add(v); }
       else S[q] = q==='months' ? Number(v) : v;
       if(q==='industry') buildSub();
       // 수량을 직접 손대기 전이면 진단을 바꾸는 즉시 구성도 다시 처방
@@ -846,7 +874,7 @@ function render(){
     const q = box.dataset.q;
     box.querySelectorAll('.chip').forEach(b=>{
       const v = b.dataset.v;
-      b.setAttribute('aria-pressed', q==='goals' ? S.goals.has(v) : String(S[q])===v);
+      b.setAttribute('aria-pressed', Q[q].multi ? S[q].has(v) : String(S[q])===v);
     });
   });
   const ind = INDUSTRY[S.industry];
@@ -946,7 +974,7 @@ function renderQuote(k){
     <div class="q-hero"><div><small>제안 미디어 플랜</small><b>${esc(client||'브랜드')} GEO 미디어 플랜 · ${planName()}</b></div><div class="amt"><small>월 집행금액 (VAT 별도)</small><b>${fmt(k.mNet)}원</b><small style="margin-top:2px">${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)</small></div></div>
     <div class="q-sec"><h3>DIAGNOSIS</h3><div class="q-diag">
       <div><small>업종</small>${indLabel()}</div>
-      <div><small>현재 상황</small>${label('stage',S.stage)}</div>
+      <div><small>현재 상황</small>${stageLabel()}</div>
       <div><small>예산 범위</small>${label('budget',S.budget)}</div>
       <div><small>월 발행량</small>${k.count}건 (총 ${k.count*S.months}건)</div>
     </div><p style="margin:8px 0 0;font-size:12px"><span style="color:#5B6890">주요 고민</span> ${label('pain',S.pain)} &nbsp;·&nbsp; <span style="color:#5B6890">목표</span> ${goals}</p></div>
@@ -1072,7 +1100,7 @@ function loadingSteps(){
   return [
     `${indLabel()} 업종의 핵심 채널과 고객 질문 유형을 확인하고 있어요`,
     goals.length ? `‘${goals[0]}’${goals.length>1?` 외 ${goals.length-1}개`:''} 목표에 맞는 콘텐츠를 고르고 있어요` : '캠페인 목표에 맞는 콘텐츠를 고르고 있어요',
-    `‘${label('pain',S.pain)}’ 고민과 현재 상황(${label('stage',S.stage)})으로 시작점을 잡고 있어요`,
+    `‘${label('pain',S.pain)}’ 고민과 현재 상황(${stageLabel()})으로 시작점을 잡고 있어요`,
     `${label('budget',S.budget)} · ${S.months}개월 기준으로 구성과 금액을 맞추고 있어요`,
     '맞춤 프로그램 처방을 정리하고 있어요'
   ];
