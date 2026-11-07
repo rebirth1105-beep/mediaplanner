@@ -165,6 +165,8 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .rx .in{color:var(--muted)}
 .rx .arrow{color:var(--accent);font-family:var(--f-num)}
 .rx .out{font-weight:600}
+.custom-note{display:block;margin-top:6px;font-size:12px;font-weight:600;color:var(--accent)}
+.custom-note[hidden]{display:none}
 .incl-tag{font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
 .rx.off .out{font-weight:500;color:var(--muted)}
 .rep-sum{font-size:15px;font-weight:700;padding:2px 0 4px}
@@ -433,7 +435,7 @@ html{scroll-behavior:smooth}
       <div class="seg" id="sSeg"></div>
       <div class="lines" id="sLines"></div>
       <div class="hr"></div>
-      <div class="total"><span>월 집행금액 (VAT 별도)</span><strong class="num" id="sTotal">0원</strong><small class="num" id="sTotalSub"></small></div>
+      <div class="total"><span>월 집행금액 (VAT 별도)</span><strong class="num" id="sTotal">0원</strong><small class="num" id="sTotalSub"></small><small class="custom-note" id="sCustom" hidden>전체 구성은 상담 후 맞춤 가격으로 조정할 수 있습니다</small></div>
       <div class="stat">
         <div><small>월 발행 콘텐츠</small><b id="sCount">0건</b></div>
         <div><small>계약 기간 총 발행</small><b id="sCountAll">0건</b></div>
@@ -464,9 +466,9 @@ html{scroll-behavior:smooth}
 /* ===== 단가표: 가격·할인은 여기만 고치면 전체에 반영됩니다 (VAT 별도, 원) ===== */
 const CATALOG = [
   {id:'audit',  cat:'초기 세팅', name:'AI 검색 노출 진단', desc:'타깃 질문 30개 기준 현재 노출 현황·경쟁사 비교 리포트', unit:'1회', price:500000, type:'setup'},
-  {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'스키마 마크업·FAQ 구조·llms.txt 적용', unit:'1회', price:800000, type:'setup'},
+  {id:'schema', cat:'초기 세팅', name:'웹사이트 구조화 데이터 세팅', desc:'지금 홈페이지를 AI가 얼마나 읽는지 측정 → 고칠 곳 기획 → 수정 (기존 홈페이지 수정)', unit:'1회', price:800000, type:'setup'},
   // 홈페이지 제작에는 구조화 데이터 세팅이 포함됨 → 함께 고르면 세팅 항목은 자동 해제 (단가 임시)
-  {id:'web',    cat:'초기 세팅', name:'GEO·SEO 최적화 홈페이지 제작', desc:'AI·검색엔진이 읽고 인용하기 좋은 구조로 설계·제작 · 구조화 데이터·llms.txt·FAQ 기본 포함', unit:'1회', price:3000000, type:'setup', covers:['schema']},
+  {id:'web',    cat:'초기 세팅', name:'GEO·SEO 최적화 홈페이지 제작', desc:'AI·검색엔진이 읽고 인용하기 좋은 구조로 설계·제작 · 구조화 데이터·llms.txt·FAQ 기본 포함 · 로그인·결제 등 기능 개발은 별도 견적', unit:'1회', price:3000000, type:'setup', covers:['schema']},
   // 블로그 포스팅: group으로 묶어 하위 메뉴(플랫폼)에서 수량 선택, 블로그별 최소 5건·5건 단위
   {id:'blog',     cat:'블로그·SNS', group:'blog', geo:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'brandblog',cat:'블로그·SNS', group:'blog', geo:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
@@ -515,8 +517,8 @@ const GROUPS = {
 /* ===== 서비스 상세 (ⓘ): 개념·제공 범위·결과물. 사례는 cases에 ['제목','URL'] 추가 ===== */
 const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
-  web:{what:'처음부터 AI와 검색엔진이 브랜드를 정확히 읽고 인용하도록 설계한 홈페이지를 만듭니다.', scope:['브랜드·서비스 정보 구조 설계 (AI가 답변에 쓰는 질문 기준)','반응형 홈페이지 디자인·제작','구조화 데이터(스키마)·FAQ·llms.txt 기본 적용','검색 등록 (구글 서치콘솔·네이버 서치어드바이저)','문의 폼 연결'], out:'오픈된 홈페이지 + 적용 체크리스트', note:'웹사이트 구조화 데이터 세팅이 포함되어 있어 따로 선택하지 않아도 됩니다. 도메인·호스팅 비용은 별도입니다.', cases:[]},
-  schema:{what:'홈페이지를 AI와 검색엔진이 읽기 쉬운 구조로 정리합니다.', scope:['스키마 마크업 (회사·서비스·FAQ)','FAQ 페이지 구조 정비','llms.txt 작성·적용'], out:'적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
+  web:{what:'처음부터 AI와 검색엔진이 브랜드를 정확히 읽고 인용하도록 설계한 홈페이지를 만듭니다.', scope:['브랜드·서비스 정보 구조 설계 (AI가 답변에 쓰는 질문 기준)','반응형 홈페이지 디자인·제작','구조화 데이터(스키마)·FAQ·llms.txt 기본 적용','검색 등록 (구글 서치콘솔·네이버 서치어드바이저)','문의 폼 연결'], out:'오픈된 홈페이지 + 적용 체크리스트', note:'웹사이트 구조화 데이터 세팅이 포함되어 있어 따로 선택하지 않아도 됩니다. 도메인·호스팅 비용은 별도입니다. 회원 로그인·결제·예약 등 기능 개발(백엔드)은 포함되지 않으며, 필요하면 검증된 전문 개발사와 연계해 별도로 견적을 드립니다.', cases:[]},
+  schema:{what:'지금 있는 홈페이지를 고쳐서, AI와 검색엔진이 회사명·서비스·지역·연락처를 정확히 읽게 만듭니다. 새로 만들기 전에 먼저 고쳐 보는 방법입니다.', scope:['① 측정: 현재 홈페이지를 AI가 얼마나 읽는지 점검','② 기획: 고칠 곳과 우선순위 정리','③ 수정: 회사·서비스·FAQ 정보 표시(스키마), FAQ 구조, AI용 안내 파일(llms.txt) 적용'], out:'점검 결과 + 적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다. 수정이 어려운 구조(일부 카페24 등 빌더형 사이트)는 점검 후 신규 제작을 권해 드릴 수 있습니다.', cases:[]},
   blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
@@ -1025,6 +1027,7 @@ function render(){
     <div class="line"><span>VAT 10%</span><span class="num">${fmt(k.vat)}원</span></div>`;
   // 큰 숫자는 월 금액, 계약 총액은 보조 정보로
   $('sTotal').textContent = fmt(k.mNet)+'원';
+  $('sCustom').hidden = !(S.pkg==='premium' || k.mNet>BUDGET_CAP.mid);
   $('sTotalSub').innerHTML = `${k.sNet?`초기 세팅비 ${fmt(k.sNet)}원 별도 (1회)<br>`:''}${S.months}개월 총 ${fmt(k.total)}원 (VAT 포함)`;
   $('reveal').innerHTML = `<div class="rv-l">${planName()} · ${S.months}개월 · 월 콘텐츠 ${k.count}건</div>
     <div class="rv-list">${k.mDisc?`월 정가 <s>${fmt(k.mList)}원</s>`:''}</div>
@@ -1103,6 +1106,7 @@ function renderQuote(k){
       <div>· 월 운영비는 매월 청구되며, 초기 세팅비는 착수 시 1회 청구됩니다.</div>
       <div>· 기사 게재 일정과 내용은 언론사 편집 기준에 따라 조정될 수 있습니다.</div>
       ${INDUSTRY[S.industry].expert?`<div>· 업종 규정(의료광고·전문직 광고 규정 등)에 맞춘 표현 검수는 업종별 단가에 포함되어 있습니다. 외부 심의·법률 자문은 별도입니다.</div>`:''}
+      ${S.pkg==='premium' || k.mNet>BUDGET_CAP.mid ? '<div>· 여러 채널을 함께 운영하는 전체 구성은 상담 후 맞춤 가격으로 조정할 수 있습니다.</div>' : ''}
       <div>· 본 미디어 플랜의 금액은 작성일로부터 ${VALID_DAYS}일간 유효합니다.</div>
     </div>
     <div class="q-foot"><div><b>스텝업컴퍼니</b><br>STEP UP by AI · AI 시대의 통합 마케팅</div><div>${QNO}</div></div>`;
