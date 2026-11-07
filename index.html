@@ -165,6 +165,17 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .rx .in{color:var(--muted)}
 .rx .arrow{color:var(--accent);font-family:var(--f-num)}
 .rx .out{font-weight:600}
+.rx.off .out{font-weight:500;color:var(--muted)}
+.rep-sum{font-size:15px;font-weight:700;padding:2px 0 4px}
+.rep-sum small{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:3px}
+.rep-g{display:grid;gap:0}
+.rep-g>b{font-size:12px;color:var(--accent);font-weight:700;padding:10px 0 2px}
+.rep-g.fit>b{color:var(--warn,#B7791F)}
+.rep-more{margin-top:2px}
+.rep-more summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:8px 0 2px;list-style:none}
+.rep-more summary::-webkit-details-marker{display:none}
+.rep-more summary::before{content:"▸ "}
+.rep-more[open] summary::before{content:"▾ "}
 @media (max-width:560px){.rx{grid-template-columns:minmax(0,1fr);gap:2px}.rx .arrow{display:none}}
 
 /* items */
@@ -753,10 +764,11 @@ function loadPackage(key){
   S.pkg = key; S.modified = false; S.qty = {}; S.setup = {};
   CATALOG.forEach(c=>{ if(c.type==='monthly') S.qty[c.id] = p.items[c.id]||0; else S.setup[c.id] = p.setup.includes(c.id); });
 }
-function recommend(){
-  const key = {low:'starter', mid:'growth', high:'premium'}[S.budget];
-  loadPackage(key); S.rec = key;
-  const why = [`${label('budget',S.budget)} 예산 → ${PACKAGES[key].name} 플랜`];
+function recommend(forceKey){
+  const recKey = {low:'starter', mid:'growth', high:'premium'}[S.budget];
+  const key = forceKey || recKey;
+  loadPackage(key); S.rec = recKey;
+  const why = [forceKey && forceKey!==recKey ? `직접 선택 → ${PACKAGES[key].name} 플랜 (진단 반영)` : `${label('budget',S.budget)} 예산 → ${PACKAGES[key].name} 플랜`];
   const ind = INDUSTRY[S.industry], tag = s => `[${indLabel()}] `+s;
   if(!applySub(key, why)){   // 시트에 없는 업종(IT·마케팅·미디어·기타)은 기존 규칙
     ind.off.forEach(([id,r])=>{ if(S.qty[id]){ S.qty[id] = 0; why.push(tag(r)); } });
@@ -775,7 +787,7 @@ function recommend(){
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
   if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
   if(S.stage==='many') why.push('기존 콘텐츠가 쌓여 있음 → 기존 글을 GEO 구조로 정비하며 이어서 발행');
-  fitBudget(why);
+  if(key===recKey) fitBudget(why);
   haveCheck(why);
   S.reasons = why;
 }
@@ -794,6 +806,40 @@ function calc(){
   const vat = Math.round(supply*VAT);
   const count = monthly.filter(c=>c.content).reduce((a,c)=>a+c.q*(c.per||1),0);
   return {rate, monthly, setup, mList, mDisc, mNet, sList, sFree, sNet, supply, vat, total:supply+vat, count, list:mList*S.months+sList};
+}
+// 세 플랜 각각에 진단을 반영했을 때의 금액 (현재 구성은 건드리지 않음)
+function planPrices(){
+  const keep = {qty:{...S.qty}, setup:{...S.setup}, pkg:S.pkg, rec:S.rec, reasons:S.reasons, modified:S.modified};
+  const out = {};
+  Object.keys(PACKAGES).forEach(k=>{ recommend(k===keep.rec ? undefined : k); const c = calc(); out[k] = {mNet:c.mNet, mList:c.mList}; });
+  Object.assign(S, keep);
+  return out;
+}
+/* 진단 리포트: 한 줄 요약 → 처방 근거(4줄까지, 나머지 펼치기) → 예산 조정 → 채널 점검(접힘) */
+function reportGroups(){
+  const g = {plan:[], add:[], fit:[], gap:[]};
+  S.reasons.forEach((r,i)=>{
+    if(i===0) g.plan.push(r);
+    else if(/^예산 상한|^필수 채널 기준/.test(r)) g.fit.push(r);
+    else if(/운영 안 함|^운영 중|^기존|^\[단기\]/.test(r)) g.gap.push(r);
+    else g.add.push(r);
+  });
+  // 추가 처방을 먼저, 제외 문장은 뒤로
+  g.add.sort((a,b)=>(/제외/.test(a)?1:0)-(/제외/.test(b)?1:0));
+  return g;
+}
+function reportHtml(){
+  const g = reportGroups(), k = calc();
+  const row = r => { const [a,b] = r.split(' → '); return `<div class="rx${/제외|다음 단계|2단계/.test(b||'')?' off':''}"><span class="in">${a}</span><span class="arrow">→</span><span class="out">${b||''}</span></div>`; };
+  const more = (list, title) => list.length ? `<details class="rep-more"><summary>${title}</summary>${list.map(row).join('')}</details>` : '';
+  const sub = subOf();
+  const head = `<div class="rep-h"><span>Diagnosis Report</span><span>처방 ${S.reasons.length}건</span></div>
+    <div class="rep-sum">${PACKAGES[S.pkg].name} 플랜 · ${sub ? sub.name : label('industry',S.industry)} 기준 · 월 ${fmt(k.mNet/10000)}만 원
+      <small>${(g.plan[0]||'').replace(' → ',' → ')}${g.fit.length?' · 예산에 맞춰 조정됨':''}</small></div>`;
+  const add = g.add.length ? `<div class="rep-g"><b>처방 근거</b>${g.add.slice(0,4).map(row).join('')}${more(g.add.slice(4), `처방 근거 ${g.add.length-4}건 더 보기`)}</div>` : '';
+  const fit = g.fit.length ? `<div class="rep-g fit"><b>예산 조정</b>${g.fit.map(row).join('')}</div>` : '';
+  const gap = g.gap.length ? `<div class="rep-g">${more(g.gap, `채널 점검 ${g.gap.length}건 · 운영 중인 채널과 빠진 채널`)}</div>` : '';
+  return head + add + fit + gap;
 }
 function planName(){ return PACKAGES[S.pkg].name + (S.modified ? ' 기반 맞춤' : ''); }
 
@@ -837,7 +883,7 @@ function buildPackages(){
   }).join('');
   $('pkgs').addEventListener('click', e=>{
     const b = e.target.closest('.pkg'); if(!b) return;
-    loadPackage(b.dataset.k); S.reasons = ['직접 선택 → '+PACKAGES[b.dataset.k].name+' 플랜 기본 구성']; render();
+    recommend(b.dataset.k); render();
   });
 }
 function buildItems(){
@@ -927,17 +973,17 @@ function render(){
     <div class="ind-r"><span>목표 지표</span><span>${ind.kpi}</span></div>
     <div class="ind-r"><span>체크포인트</span><span class="warn">${ind.caution}</span></div>`;
   document.querySelectorAll('#sSeg button').forEach(b=>b.setAttribute('aria-pressed', Number(b.dataset.m)===S.months));
+  const cardPrice = planPrices();
   document.querySelectorAll('.pkg').forEach(b=>{
     b.setAttribute('aria-pressed', b.dataset.k===S.pkg);
     b.classList.toggle('rec', b.dataset.k===S.rec);
     b.querySelector('.badge').hidden = b.dataset.k!==S.rec;
-    // 카드 가격도 선택한 기간 할인을 반영
-    const m = CATALOG.reduce((a,c)=>a+(PACKAGES[b.dataset.k].items[c.id]||0)*P(c),0), r = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
-    b.querySelector('.pp').innerHTML = `월 ${fmt((m-r1000(m*r))/10000)}만 원<small> 부터 · VAT 별도</small>` +
-      (r ? `<small style="display:block"><s>정가 ${fmt(m/10000)}만 원</s> · ${S.months}개월 −${Math.round(r*100)}%</small>` : '');
+    // 카드 가격 = 이 플랜에 진단(업종·고민·목표)을 반영한 실제 월 집행금액 (선택한 기간 할인 포함)
+    const q = cardPrice[b.dataset.k], r = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
+    b.querySelector('.pp').innerHTML = `월 ${fmt(q.mNet/10000)}만 원<small> · 진단 반영 · VAT 별도</small>` +
+      (r ? `<small style="display:block"><s>정가 ${fmt(q.mList/10000)}만 원</s> · ${S.months}개월 −${Math.round(r*100)}%</small>` : '');
   });
-  $('reasons').innerHTML = `<div class="rep-h"><span>Diagnosis Report</span><span>처방 ${S.reasons.length}건</span></div>` +
-    S.reasons.map(r=>{ const [a,b] = r.split(' → '); return `<div class="rx"><span class="in">${a}</span><span class="arrow">→</span><span class="out">${b||''}</span></div>`; }).join('');
+  $('reasons').innerHTML = reportHtml();
   CATALOG.forEach(c=>{
     const row = document.querySelector(`.row[data-id="${c.id}"]`);
     if(c.type==='setup'){
