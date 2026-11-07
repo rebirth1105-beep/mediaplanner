@@ -663,7 +663,7 @@ const HAVE = {
   threads:{ch:['스레드'], name:'스레드', tip:'스레드 계정 세팅·운영'},
   youtube:{ch:['롱폼 유튜브'], name:'유튜브', tip:'롱폼 영상 1~2편이라도 시작 (AI가 영상 설명·자막도 참고)'},
   web:{ch:['홈페이지'], name:'홈페이지', tip:'GEO·SEO 홈페이지 제작 검토'},
-  press:{ch:['보도자료','인터뷰 기사','칼럼'], name:'기사·언론', tip:'브랜드 인터뷰 기사로 첫 공식 기록 만들기'},
+  press:{ch:['보도자료','인터뷰 기사','칼럼'], name:'기사·언론', tip:'언론 기사로 첫 공식 기록 만들기'},
 };
 const stageLabel = () => label('stage',S.stage) + (S.have.size ? ' · 운영 중: '+[...S.have].map(k=>HAVE[k].name).join('·') : '');
 function haveCheck(why){
@@ -672,13 +672,56 @@ function haveCheck(why){
     Object.entries(HAVE).forEach(([k,c])=>{
       if(S.have.has(k)) return;
       const lv = imp(s.d, s.i, c.ch);
-      if(lv===1 || lv===2) why.push(`[${s.name}] ${c.name} ${LV[lv]}(${lv})인데 운영 안 함 → ${c.tip}`);
+      const planIds = {blog:['blog','brandblog','tistory','ownblog'], insta:['insta'], threads:['threads'], press:['press','pressP','pressM','brand','column']}[k];
+      const tip = planIds && !planIds.some(id=>S.qty[id]>0) ? '다음 단계에서 시작 권장 (이번 구성에는 미포함)' : c.tip;
+      if(lv===1 || lv===2) why.push(`[${s.name}] ${c.name} ${LV[lv]}(${lv})인데 운영 안 함 → ${tip}`);
     });
   }
   if(S.have.has('press')) why.push('기존 기사 보유 → 제휴·메이저 매체 보도자료로 노출 범위 확대 가능');
-  const keep = [...S.have].filter(k=>k!=='press' && k!=='web').map(k=>HAVE[k].name);
+  const inPlan = {blog:['blog','brandblog','tistory','ownblog'], insta:['insta'], threads:['threads'], youtube:['youtube','shorts']};
+  const keep = [...S.have].filter(k=>inPlan[k] && inPlan[k].some(id=>S.qty[id]>0)).map(k=>HAVE[k].name);
   if(keep.length) why.push(`운영 중: ${keep.join('·')} → 기존 계정 이어서 운영 (신규 개설 비용 없음)`);
   if(S.have.has('web') && S.setup.web){ S.setup.web = false; why.push('홈페이지 보유 → 새로 만들지 않고 구조화 데이터 세팅으로 수정'); if(!S.setup.schema) S.setup.schema = true; }
+}
+/* ===== 예산 맞춤 (11/7): 월 집행금액이 예산 상한을 넘으면 우선순위 낮은 것부터 줄임. 예산보다 적게 나오는 건 그대로 둠 =====
+   1단계 권장(3)·시트 밖 항목 축소 → 2단계 고가 영상은 '2단계 추천'으로 → 3단계 핵심(2) 축소 → 그래도 넘으면 필수 기준 최소 금액 안내
+   고민(PAIN)·목표(goals)로 들어간 항목은 보호 (영상 제외) */
+const BUDGET_CAP = {low:3000000, mid:7000000};
+const FIT_STEPS = [   // [항목, 줄일 수량, 리포트 표기]
+  ['pressM',0,'메이저 보도자료'],['pressP',0,'제휴 매체 보도자료'],['tistory',0,'티스토리'],['card',0,'카드뉴스'],['brandblog',0,'브랜드 블로그'],['ownblog',0,'홈페이지 블로그'],
+  ['faq',4,'Q&A 월 4건으로'],['column',1,'칼럼 월 1편으로'],['blog',15,'블로그 월 15건으로'],['report',0,'월간 모니터링'],
+  ['brand',0,'인터뷰 기사'],['press',0,'보도자료'],['insta',0,'인스타그램'],['threads',0,'스레드'],
+];
+const FIT_WORDS = {pressM:'메이저',pressP:'제휴 매체',tistory:'티스토리',card:'카드뉴스',faq:'Q&A',column:'칼럼',report:'모니터링',brand:'인터뷰 기사',press:'보도자료',insta:'인스타그램',threads:'스레드',shorts:'숏폼',youtube:'롱폼'};
+function itemLv(id){
+  const s = subOf(); if(!s) return 3;
+  const m = CH_MAP.find(x=>x.id===id); if(!m) return 3;
+  return imp(s.d, s.i, m.ch) || 3;
+}
+function fitBudget(why){
+  const cap = BUDGET_CAP[S.budget]; if(!cap || calc().mNet<=cap) return;
+  const goalIds = {trust:'brand', lead:'insta', expert:'column', ai:'faq'};
+  const keep = new Set([...PAIN[S.pain].add.map(a=>a[0]), ...[...S.goals].map(g=>goalIds[g]).filter(Boolean)]);
+  if(S.goals.has('ai')) keep.add('report');
+  const cut = [], later = [];
+  const over = () => calc().mNet > cap;
+  const cutIds = new Set();
+  const pass = lvOk => { for(const [id,n,t] of FIT_STEPS){ if(!over()) return;
+    if(keep.has(id) || !lvOk(itemLv(id)) || (S.qty[id]||0)<=n) continue;
+    S.qty[id] = n; cut.push(t); if(!n) cutIds.add(id); } };
+  pass(lv=>lv>=3);
+  for(const id of ['youtube','shorts']){ if(!over()) break; if(S.qty[id]){ S.qty[id]=0; cutIds.add(id); later.push(byId(id).name); } }
+  pass(lv=>lv===2);
+  // 줄이거나 뺀 항목을 말하는 앞쪽 근거 문장 정리
+  for(let i=why.length-1;i>=1;i--){
+    const out = why[i].split(' → ')[1]||'';
+    const gone = !/제외/.test(out) && [...cutIds].some(id=>out.replace(/\(.*?\)/g,'').includes(FIT_WORDS[id]));   // 예산 맞춤으로 뺀 항목을 처방한 문장만 정리 (괄호 속 언급·제외 문장은 유지)
+    if(gone) why.splice(i,1); else if(S.qty.blog===15) why[i] = why[i].replace('블로그 월 25건','블로그 월 15건');
+  }
+  const capTxt = '월 '+(cap/10000)+'만 원';
+  if(cut.length) why.push(`예산 상한(${capTxt}) 맞춤 → ${cut.join(' · ')} 조정`);
+  later.forEach(n=>why.push(`예산 상한(${capTxt}) → ${n}은 2단계 추천 (1단계 성과를 보고 추가)`));
+  if(over()) why.push(`필수 채널 기준 최소 금액 → 예산보다 높지만 이 업종의 기본 구성 (기간 할인·단계 시작 협의)`);
 }
 const QUESTIONS = {
   marketing:['[업종] 마케팅 잘하는 대행사 추천해줘','[분야] 브랜드 홍보는 어느 에이전시에 맡기면 좋아?','[회사명]은 어떤 프로젝트를 했어?'],
@@ -728,10 +771,11 @@ function recommend(){
   else if(S.goals.has('trust')) why.push('언론 신뢰 확보 → 브랜드 인터뷰 기사 포함');
   if(S.goals.has('lead') || S.pain==='noconv') why.push('[단기] GEO 성과가 쌓이는 3~6개월 동안 문의 공백 → 검색광고·플레이스는 「광고 진단」에서 별도 설계');
   if(S.goals.has('lead')){ if(!S.qty.insta){ S.qty.insta = 1; why.push('검색 유입·문의 확대 → 인스타그램 운영 추가'); } else why.push('검색 유입·문의 확대 → 블로그 월 25건 + 인스타그램으로 접점 확보'); }
-  if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push('영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포'); }
+  if(S.goals.has('video')){ if(!S.qty.shorts){ S.qty.shorts = 1; why.push('영상 브랜딩 → 숏폼 묶음 추가 (롱폼은 필요 시 선택)'); } else why.push(S.qty.youtube ? '영상 브랜딩 → 롱폼 월 4편을 숏폼으로 리컷해 동시 배포' : '영상 브랜딩 → 숏폼 묶음 포함 (롱폼은 필요 시 선택)'); }
   if(S.goals.has('ai')){ if(!S.qty.faq) S.qty.faq = 4; why.push('AI 답변 노출 → Q&A 콘텐츠 월 '+S.qty.faq+'건 · 월간 노출 모니터링'); }
   if(S.stage==='none' && !S.setup.schema){ S.setup.schema = true; why.push('콘텐츠 기반이 없음 → 구조화 데이터 세팅부터 시작'); }
   if(S.stage==='many') why.push('기존 콘텐츠가 쌓여 있음 → 기존 글을 GEO 구조로 정비하며 이어서 발행');
+  fitBudget(why);
   haveCheck(why);
   S.reasons = why;
 }
