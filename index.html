@@ -165,6 +165,7 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .rx .in{color:var(--muted)}
 .rx .arrow{color:var(--accent);font-family:var(--f-num)}
 .rx .out{font-weight:600}
+.incl-tag{font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap}
 .rx.off .out{font-weight:500;color:var(--muted)}
 .rep-sum{font-size:15px;font-weight:700;padding:2px 0 4px}
 .rep-sum small{display:block;font-size:12.5px;font-weight:500;color:var(--muted);margin-top:3px}
@@ -483,7 +484,8 @@ const CATALOG = [
   {id:'press',  cat:'언론 노출', geo:'article', name:'보도자료 · 기본', desc:'사실기사 형식 원고 작성 · 대한청년일보 게재', unit:'건', price:150000, type:'monthly', max:8, content:true},
   {id:'pressP', cat:'언론 노출', geo:'article', name:'보도자료 · 제휴 매체', desc:'사실기사 형식 원고 작성 · 제휴 언론사 게재', unit:'건', price:300000, type:'monthly', max:8, content:true},
   {id:'pressM', cat:'언론 노출', geo:'article', name:'보도자료 · 메이저 언론', desc:'사실기사 형식 원고 작성 · 메이저 언론사 게재', unit:'건', price:450000, type:'monthly', max:4, content:true},
-  {id:'report', cat:'관리·리포트', name:'월간 AI 노출 모니터링', desc:'주요 AI 답변 속 브랜드 언급률 추적·다음 달 전략 조정', unit:'월', price:300000, type:'monthly', max:1},
+  // 월간 리포트: 정가 30만 원이지만 콘텐츠 항목이 하나라도 있으면 기본 포함(0원) — 11/8 결정. 범위는 질문 20개 × 주요 AI 3곳 + 1장 요약
+  {id:'report', cat:'관리·리포트', name:'월간 AI 노출 리포트', desc:'매월 같은 질문 20개로 주요 AI 3곳 답변 확인 + 1장 요약 · GEO 계약 기본 포함', unit:'월', price:300000, type:'monthly', max:1, incl:true},
 ];
 /* ===== 일반 / GEO 최적화 버전: geo 값이 있는 항목은 버전 선택 가능, GEO는 일반 단가 + 40% (임시) ===== */
 const GEO_PREMIUM = 0.4;
@@ -531,7 +533,7 @@ const INFO = {
   press:{what:'회사 소식을 사실 기사 형식으로 작성해 대한청년일보에 게재합니다.', scope:['소식·자료 정리','기사 작성','게재 및 링크 전달'], out:'게재 기사 링크', cases:[]},
   pressP:{what:'회사 소식을 사실 기사 형식으로 작성해 제휴 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','제휴 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'게재 매체와 일정은 매체 사정에 따라 달라질 수 있습니다.', cases:[]},
   pressM:{what:'회사 소식을 사실 기사 형식으로 작성해 메이저 언론사에 게재합니다.', scope:['소식·자료 정리','기사 작성','메이저 언론사 게재 및 링크 전달'], out:'게재 기사 링크', note:'매체별 단가가 달라 매체에 따라 금액이 추가될 수 있습니다.', cases:[]},
-  report:{what:'매월 같은 질문 세트로 AI 답변을 다시 확인해 변화를 추적합니다.', scope:['브랜드 언급률 추적','경쟁사 비교','다음 달 질문·콘텐츠 조정'], out:'월간 리포트', cases:[]},
+  report:{what:'매월 같은 질문 세트로 AI 답변을 다시 확인해 변화를 숫자로 보여 드립니다.', scope:['질문 20개 × 주요 AI 3곳 (ChatGPT·Gemini·Perplexity 등) 답변 확인','브랜드 언급 여부·변화 기록','다음 달 질문·콘텐츠 주제 조정'], out:'월간 1장 요약 리포트', note:'정가 월 30만 원 상당, GEO 계약에 기본 포함됩니다. 경쟁사 비교·질문 추가 등 심화 분석은 별도 협의입니다.', cases:[]},
 };
 const PACKAGES = {
   starter:{name:'Starter', desc:'블로그와 스레드로 검색에 잡히는 기본기를 쌓습니다', items:{blog:25,threads:1,press:1,report:1}, setup:['audit']},
@@ -700,7 +702,7 @@ function haveCheck(why){
 const BUDGET_CAP = {low:3000000, mid:7000000};
 const FIT_STEPS = [   // [항목, 줄일 수량, 리포트 표기]
   ['pressM',0,'메이저 보도자료'],['pressP',0,'제휴 매체 보도자료'],['tistory',0,'티스토리'],['card',0,'카드뉴스'],['brandblog',0,'브랜드 블로그'],['ownblog',0,'홈페이지 블로그'],
-  ['faq',4,'Q&A 월 4건으로'],['column',1,'칼럼 월 1편으로'],['blog',15,'블로그 월 15건으로'],['report',0,'월간 모니터링'],
+  ['faq',4,'Q&A 월 4건으로'],['column',1,'칼럼 월 1편으로'],['blog',15,'블로그 월 15건으로'],
   ['brand',0,'인터뷰 기사'],['press',0,'보도자료'],['insta',0,'인스타그램'],['threads',0,'스레드'],
 ];
 const FIT_WORDS = {pressM:'메이저',pressP:'제휴 매체',tistory:'티스토리',card:'카드뉴스',faq:'Q&A',column:'칼럼',report:'모니터링',brand:'인터뷰 기사',press:'보도자료',insta:'인스타그램',threads:'스레드',shorts:'숏폼',youtube:'롱폼'};
@@ -793,8 +795,10 @@ function recommend(forceKey){
 }
 
 function calc(){
+  const hasContent = CATALOG.some(c=>c.content && S.qty[c.id]>0);
+  CATALOG.filter(c=>c.incl).forEach(c=>{ S.qty[c.id] = hasContent ? 1 : 0; });
   const rate = (PERIODS.find(p=>p.m===S.months)||PERIODS[0]).r;
-  const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, name:c.name+(c.geo?` (${tierName(c)})`:''), desc:c.desc+(isGeo(c)?' · AI 인용 구조·반영 점검 포함':''), price:P(c), q:S.qty[c.id], amt:P(c)*S.qty[c.id]}));
+  const monthly = CATALOG.filter(c=>c.type==='monthly' && S.qty[c.id]>0).map(c=>({...c, name:c.name+(c.geo?` (${tierName(c)})`:''), desc:c.desc+(isGeo(c)?' · AI 인용 구조·반영 점검 포함':''), price:c.incl?0:P(c), listPrice:P(c), q:S.qty[c.id], amt:c.incl?0:P(c)*S.qty[c.id]}));
   const mList = monthly.reduce((a,c)=>a+c.amt,0);
   const mDisc = r1000(mList*rate);
   const mNet = mList - mDisc;
@@ -805,7 +809,7 @@ function calc(){
   const supply = mNet*S.months + sNet;
   const vat = Math.round(supply*VAT);
   const count = monthly.filter(c=>c.content).reduce((a,c)=>a+c.q*(c.per||1),0);
-  return {rate, monthly, setup, mList, mDisc, mNet, sList, sFree, sNet, supply, vat, total:supply+vat, count, list:mList*S.months+sList};
+  return {rate, monthly, setup, mList, mDisc, mNet, sList, sFree, sNet, supply, vat, total:supply+vat, count, list:(mList+monthly.filter(c=>c.incl).reduce((a,c)=>a+c.listPrice*c.q,0))*S.months+sList};
 }
 // 세 플랜 각각에 진단을 반영했을 때의 금액 (현재 구성은 건드리지 않음)
 function planPrices(){
@@ -893,7 +897,7 @@ function buildItems(){
       <div class="rp" id="rp-${c.id}"></div>
       <div class="ctl">${c.type==='setup'
         ? `<label class="toggle"><input type="checkbox" id="chk-${c.id}"> <span id="tl-${c.id}">포함</span></label>`
-        : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
+        : c.incl ? `<span class="incl-tag" id="q-${c.id}">기본 포함</span>` : `<span class="stepper"><button type="button" data-d="-1" aria-label="${c.name} 줄이기">−</button><output id="q-${c.id}">0</output><button type="button" data-d="1" aria-label="${c.name} 늘리기">+</button></span>`}</div>
       <div class="ra" id="a-${c.id}"></div>
     </div>`;
   // 묶음 항목은 상위 행 1개 + 펼치는 하위 메뉴
@@ -995,11 +999,12 @@ function render(){
       $('a-'+c.id).innerHTML = by ? '포함' : !S.setup[c.id] ? '–' : c.id==='audit' && calc().mNet>=AUDIT_FREE_MIN ? `<s>${fmt(c.price)}</s>무상` : `${fmt(c.price)}원<small>1회</small>`;
     } else {
       const q = S.qty[c.id]||0;
+      if(c.incl){ row.classList.toggle('off', !q); $('a-'+c.id).innerHTML = q ? '포함<small> 0원</small>' : '–'; $('q-'+c.id).textContent = q ? '기본 포함' : '콘텐츠 선택 시 포함'; return; }
       $('q-'+c.id).textContent = q; row.classList.toggle('off', !q);
       $('a-'+c.id).innerHTML = q ? `${fmt(P(c)*q)}원<small>/월</small><em>${fmt(P(c))}원 × ${q}${c.unit}</em>` : '–';
     }
   });
-  CATALOG.forEach(c=>{ $('rp-'+c.id).textContent = `${fmt(P(c))}원 / ${c.unit}`; });
+  CATALOG.forEach(c=>{ if(c.incl) $('rp-'+c.id).innerHTML = `<s>${fmt(P(c))}원</s> / ${c.unit}`; else $('rp-'+c.id).textContent = `${fmt(P(c))}원 / ${c.unit}`; });
   Object.keys(GROUPS).forEach(g=>{ const c = CATALOG.find(x=>x.group===g); $('grp-rp-'+g).textContent = `${fmt(P(c))}원 / ${c.unit}`; });
   document.querySelectorAll('.tier').forEach(t=>t.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', (S.tier[t.dataset.tier]||'geo')===b.dataset.t)));
   Object.keys(GROUPS).forEach(g=>{
@@ -1049,7 +1054,7 @@ function renderQuote(k){
   const client = $('cName').value.trim(), person = $('cPerson').value.trim(), owner = $('cOwner').value.trim();
   const today = new Date(), until = new Date(today.getTime()+VALID_DAYS*864e5);
   const goals = [...S.goals].map(g=>label('goals',g)).join(', ') || '미선택';
-  const mRows = k.monthly.map((c,i,a)=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">${c.q}${c.unit}/월</td><td class="r m">${fmt(c.amt)}</td></tr>`+
+  const mRows = k.monthly.map((c,i,a)=>(c.incl ? `<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m"><s>${fmt(c.listPrice)}</s></td><td class="r m">기본 포함</td><td class="r m">0</td></tr>` : `<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">${c.q}${c.unit}/월</td><td class="r m">${fmt(c.amt)}</td></tr>`)+
     (c.group && GROUPS[c.group].incl && a[i+1]?.group!==c.group ? `<tr class="incl-r"><td>${GROUPS[c.group].incl.title}<small>${GROUPS[c.group].incl.modules.map(m=>m[2].join(' · ')).join(' · ')}</small></td><td class="r m">–</td><td class="r m">포함</td><td class="r m">포함</td></tr>` : '')).join('');
   const sRows = k.setup.map(c=>`<tr><td>${c.name}<small>${c.desc}</small></td><td class="r m">${fmt(c.price)}</td><td class="r m">1회</td><td class="r m">${c.free?`<s>${fmt(c.amt)}</s> 0`:fmt(c.amt)}</td></tr>`).join('');
   $('quote').innerHTML = `
@@ -1110,7 +1115,7 @@ function fileBase(){ return `스텝업_GEO미디어플랜_${($('cName').value.tr
 function summaryText(){
   const k = calc(), c = $('cName').value.trim()||'고객사';
   return [`[${c}] GEO 미디어 플랜 (${QNO})`, `플랜: ${planName()} · ${S.months}개월`, '',
-    ...k.monthly.map((i,n,a)=>`- ${i.name} ${i.q}${i.unit}/월: ${fmt(i.amt)}원`+(i.group && GROUPS[i.group].incl && a[n+1]?.group!==i.group ? `
+    ...k.monthly.map((i,n,a)=>(i.incl ? `- ${i.name}: 기본 포함 (정가 월 ${fmt(i.listPrice)}원)` : `- ${i.name} ${i.q}${i.unit}/월: ${fmt(i.amt)}원`)+(i.group && GROUPS[i.group].incl && a[n+1]?.group!==i.group ? `
 - ${GROUPS[i.group].incl.title}: 포함`:'')),
     ...k.setup.map(i=>`- ${i.name} (1회): ${i.free?'무상':fmt(i.amt)+'원'}`), '',
     `월 운영비: ${fmt(k.mNet)}원${k.mDisc?` (기간 할인 ${Math.round(k.rate*100)}% 적용)`:''}`,
