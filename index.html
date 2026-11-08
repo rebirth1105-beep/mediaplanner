@@ -140,6 +140,24 @@ body.present .reveal{display:grid;gap:4px;justify-items:center;text-align:center
 .tier button+button{border-left:1px solid var(--line)}
 .tier button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
 .grp-h .tier{display:flex;width:max-content}
+.tierrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+.tierrow .tier,.grp-h .tierrow .tier{margin-top:0;display:inline-flex;width:auto}
+.cmp-link{border:0;background:none;color:var(--accent);font-size:12px;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+.sv-card.wide{width:min(680px,100%)}
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.5}
+.cmp th,.cmp td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp thead th{font-size:12px;color:var(--muted);font-weight:600}
+.cmp thead th.g{color:var(--accent)}
+.cmp th[scope=row]{color:var(--muted);font-weight:500;white-space:nowrap;width:1%}
+.cmp td.g{background:var(--accent-soft)}
+.cmp .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cmp tr.on th,.cmp tr.on td{font-weight:700;color:var(--fg)}
+.cmp-def{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp-def div{border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13.5px}
+.cmp-def div.g{border-color:var(--accent);background:var(--accent-soft)}
+.cmp-def b{display:block;font-size:12px;margin-bottom:4px;color:var(--muted)}
+.cmp-def .g b{color:var(--accent)}
+@media (max-width:560px){.cmp-def{grid-template-columns:1fr}.cmp th,.cmp td{padding:7px 6px}}
 .sv-geo{border-top:1px solid var(--line);padding-top:12px}
 .sv-geo>b{color:var(--accent)}
 .info{border:1px solid var(--line);background:transparent;width:20px;height:20px;border-radius:50%;font-size:11.5px;font-weight:700;line-height:1;color:var(--muted);cursor:pointer;margin-left:6px;vertical-align:1px;padding:0}
@@ -490,7 +508,30 @@ const CATALOG = [
 ];
 /* ===== 일반 / GEO 최적화 버전: geo 값이 있는 항목은 버전 선택 가능, GEO는 일반 단가 + 건당 정액 (11/9 확정) ===== */
 // 블로그 +2만(소상공인 +1만), 기사 +10만(보도자료 기본 +5만)
-const GEO_ADD = c => c.geo==='blog' ? (S.industry==='local' ? 10000 : 20000) : (c.id==='press' ? 50000 : 100000);
+const GEO_ADD = (c, ind=S.industry) => c.geo==='blog' ? (ind==='local' ? 10000 : 20000) : (c.id==='press' ? 50000 : 100000);
+/* 일반 vs GEO 비교표 ('차이 보기' 팝업) — 내용은 바탕화면 「GEO 콘텐츠 비교 매뉴얼」과 같게 유지 */
+const GEO_CMP = {
+  def:['사람이 검색해서 읽는 글. 네이버·구글 검색 노출과 브랜드 홍보가 목적입니다.','사람뿐 아니라 AI(ChatGPT·Gemini·Perplexity 등)가 답변할 때 근거로 가져가기 좋게 구조와 근거까지 설계한 글입니다.'],
+  blog:[
+    ['목적','검색 유입 · 브랜드 홍보','검색 유입 + AI 답변 속 인용'],
+    ['주제 선정','검색량 기준 키워드','고객이 AI에게 실제로 묻는 질문형 주제'],
+    ['글 구조','주제 중심 원고','첫 문단 핵심 요약 · 정답형 Q&A 블록 · 출처 표기'],
+    ['브랜드 정보','자연스럽게 소개','브랜드명·서비스·대표 표현을 모든 글에서 통일'],
+    ['근거 자료','일반 참고 자료','공식 자료·수치·출처 명시'],
+    ['검수','오탈자 · 문장 · 키워드','+ 타깃 키워드 재검수 · 사실관계 · 브랜드 표현'],
+    ['발행 후','발행 링크 + 기본 성과(조회·유입)','+ 글별 AI 답변 반영 점검 → 다음 달 주제 조정'],
+  ],
+  article:[
+    ['목적','브랜드 소식 · 신뢰 확보','신뢰 확보 + AI 답변 속 인용'],
+    ['기사 구조','일반 기사 형식','핵심 요약 · 팩트 박스(설립연도 · 서비스 · 수치)'],
+    ['검색어','기사 주제 중심','타깃 검색어를 정해 제목 · 부제 · 본문에 반영'],
+    ['브랜드 정보','자연스럽게 소개','기사 · 블로그 · 홈페이지와 같은 표현으로 통일'],
+    ['검수','오탈자 · 사실관계','+ 게재 전 타깃 검색어 재검수'],
+    ['게재 후','게재 링크 전달','+ 주요 AI 답변 반영 점검'],
+  ],
+  common:'두 버전 모두 운영 전략·키워드 조사와 월간 AI 노출 리포트(질문 20개 × 주요 AI 3곳)가 기본 포함입니다. AI 답변 노출은 보장하지 않으며, 매달 측정해 숫자로 보여드립니다.',
+  basicFit:'일반 버전이 맞는 경우: 네이버 지도·블로그 검색이 주 유입인 동네 매장, 체험단처럼 후기 노출이 목적인 글, 발행량을 먼저 늘려야 할 때.',
+};
 const GEO_ADDS = {
   blog:['고객이 AI에게 실제로 묻는 질문을 골라 질문형 주제로 작성','글마다 AI가 그대로 인용할 수 있는 정답형 Q&A 블록 포함 (핵심 요약 · 출처 표기)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','발행 후 주요 AI 답변 반영 여부 점검'],
   article:['AI가 인용하기 좋은 기사 구조 (핵심 요약 · 팩트 박스)','브랜드 공식 정보와 표현 통일 (AI가 같은 브랜드로 인식)','게재 후 주요 AI 답변 반영 여부 점검'],
@@ -505,7 +546,7 @@ const isGeo = c => !!c.geo && S.tier[tierKey(c)]!=='basic';    // 기본값은 G
 const base = c => c.group==='blog' ? (BLOG_RATE[S.industry]||c.price) : c.price;
 const P = c => isGeo(c) ? base(c)+GEO_ADD(c) : base(c);
 const tierName = c => c.geo ? (isGeo(c) ? 'GEO 최적화' : '일반') : '';
-const tierSwitch = (key, label) => `<span class="tier" data-tier="${key}" role="group" aria-label="${label} 버전"><button type="button" data-t="basic">일반</button><button type="button" data-t="geo">GEO 최적화</button></span>`;
+const tierSwitch = (key, label) => `<div class="tierrow"><span class="tier" data-tier="${key}" role="group" aria-label="${label} 버전"><button type="button" data-t="basic">일반</button><button type="button" data-t="geo">GEO 최적화</button></span><button type="button" class="cmp-link" data-cmp="${key==='blog'?'blog':'article'}">일반 vs GEO 차이 보기</button></div>`;
 /* ===== 묶음 항목: 상위 행 이름 (하위 항목은 CATALOG의 group 값으로 연결) ===== */
 const GROUPS = {
   blog:{name:'블로그 포스팅', desc:'운영 전략·키워드 조사 전략 수립 포함 · 블로그별 최소 5건, 5건 단위',
@@ -926,6 +967,7 @@ function buildItems(){
     const t = e.target.closest('button[data-toggle]');
     if(t){ const open = t.getAttribute('aria-expanded')!=='true'; t.setAttribute('aria-expanded', open); $('sub-'+t.dataset.toggle).hidden = !open; return; }
     const inf = e.target.closest('button[data-info]'); if(inf){ openInfo(inf.dataset.info, inf); return; }
+    const cmp = e.target.closest('button[data-cmp]'); if(cmp){ openCmp(cmp.dataset.cmp, cmp); return; }
     const b = e.target.closest('button[data-d]'); if(!b) return;
     const id = b.closest('.row').dataset.id, c = byId(id);
     const cur = S.qty[id]||0, d = Number(b.dataset.d), min = c.min||0;
@@ -960,7 +1002,35 @@ function openInfo(id, from){
     ${d.note?`<p class="sv-note">${d.note}</p>`:''}`;
   $('sv').hidden = false; $('svCard').querySelector('.sv-x').focus();
 }
-function closeInfo(){ $('sv').hidden = true; if(infoFrom) infoFrom.focus(); }
+/* 일반 vs GEO 비교 팝업: 정의 → 가격(발표 모드에선 숨김) → 항목별 비교 → 공통 안내 */
+function openCmp(kind, from){
+  infoFrom = from;
+  const won = n => (n/10000).toLocaleString('ko-KR')+'만';
+  let priceRows;
+  if(kind==='blog'){
+    const b = byId('blog'), cur = !S.industry ? '' : ['medical','pro','local'].includes(S.industry) ? S.industry : 'etc';
+    priceRows = [['medical','메디컬'],['pro','전문직'],['etc','그 외 업종'],['local','소상공인']].map(([k,t])=>{
+      const n = BLOG_RATE[k]||b.price, g = n+GEO_ADD(b,k);
+      return `<tr class="${k===cur?'on':''}"><th scope="row">${t}${k===cur?' (선택 업종)':''}</th><td class="n">${won(n)}</td><td class="n g">${won(g)}</td><td class="n">+${won(g-n)}</td></tr>`;
+    }).join('');
+  } else {
+    priceRows = CATALOG.filter(c=>c.geo==='article').map(c=>
+      `<tr><th scope="row">${c.name}</th><td class="n">${won(c.price)}</td><td class="n g">${won(c.price+GEO_ADD(c))}</td><td class="n">+${won(GEO_ADD(c))}</td></tr>`).join('');
+  }
+  $('svCard').classList.add('wide');
+  $('svCard').innerHTML = `
+    <div class="sv-h"><div><small>${kind==='blog'?'블로그 포스팅':'언론 기사'}</small><h3 id="svTitle">일반 vs GEO 최적화</h3></div><button type="button" class="sv-x" aria-label="닫기">×</button></div>
+    <div class="cmp-def"><div><b>일반</b>${GEO_CMP.def[0]}</div><div class="g"><b>GEO 최적화</b>${GEO_CMP.def[1]}</div></div>
+    <div class="sv-b only-full"><b>가격 (${kind==='blog'?'건당, 월 25건 기준':'건당'} · VAT 별도)</b>
+      <table class="cmp"><thead><tr><th></th><th class="n">일반</th><th class="n g">GEO</th><th class="n">차이</th></tr></thead><tbody>${priceRows}</tbody></table></div>
+    <div class="sv-b"><b>무엇이 다른가</b>
+      <table class="cmp"><thead><tr><th></th><th>일반</th><th class="g">GEO 최적화</th></tr></thead>
+      <tbody>${GEO_CMP[kind].map(([k,a,g])=>`<tr><th scope="row">${k}</th><td>${a}</td><td class="g">${g}</td></tr>`).join('')}</tbody></table></div>
+    <p style="font-size:13px;color:var(--muted)">${kind==='blog'?GEO_CMP.common:GEO_CMP.common.replace('운영 전략·키워드 조사와 ','')}</p>
+    ${kind==='blog'?`<p class="sv-note">${GEO_CMP.basicFit}</p>`:''}`;
+  $('sv').hidden = false; $('svCard').querySelector('.sv-x').focus();
+}
+function closeInfo(){ $('sv').hidden = true; $('svCard').classList.remove('wide'); if(infoFrom) infoFrom.focus(); }
 $('sv').addEventListener('click', e=>{ if(e.target===$('sv') || e.target.closest('.sv-x')) closeInfo(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('sv').hidden) closeInfo(); });
 
