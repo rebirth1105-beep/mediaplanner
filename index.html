@@ -494,8 +494,8 @@ const CATALOG = [
   // 홈페이지 제작에는 구조화 데이터 세팅이 포함됨 → 함께 고르면 세팅 항목은 자동 해제 (단가 임시)
   {id:'web',    cat:'초기 세팅', name:'GEO·SEO 최적화 홈페이지 제작', desc:'AI·검색엔진이 읽고 인용하기 좋은 구조로 설계·제작 · 구조화 데이터·llms.txt·FAQ 기본 포함 · 로그인·결제 등 기능 개발은 별도 견적', unit:'1회', price:3000000, type:'setup', covers:['schema']},
   // 블로그 포스팅: group으로 묶어 하위 메뉴(플랫폼)에서 수량 선택, 블로그별 최소 5건·5건 단위
-  {id:'blog',     cat:'블로그·SNS', group:'blog', geo:'blog', sub:'네이버 블로그', name:'블로그 포스팅 · 네이버 블로그', desc:'네이버 검색·AI 인용을 고려한 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
-  {id:'brandblog',cat:'블로그·SNS', group:'blog', geo:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'브랜드 공식 블로그 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'blog',     cat:'블로그·SNS', group:'blog', geo:'blog', sub:'브랜드 블로그', name:'블로그 포스팅 · 브랜드 블로그', desc:'고객사 공식 네이버 블로그 운영 대행 · 원고 작성·발행 (기준 월 25건)', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
+  {id:'review',   cat:'블로그·SNS', group:'blog', sub:'체험단 블로그', name:'블로그 포스팅 · 체험단 블로그', desc:'체험단·외부 블로거 후기 포스팅 모집·관리 · 광고 표시 준수 · AI 부스터 대상 아님', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'tistory',  cat:'블로그·SNS', group:'blog', geo:'blog', sub:'티스토리', name:'블로그 포스팅 · 티스토리', desc:'구글·AI 검색을 고려한 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'ownblog',  cat:'블로그·SNS', group:'blog', geo:'blog', sub:'홈페이지 자체 블로그', name:'블로그 포스팅 · 홈페이지 자체 블로그', desc:'자사 홈페이지 블로그에 원고 작성·발행', unit:'건', price:50000, type:'monthly', min:5, max:50, step:5, content:true},
   {id:'insta',  cat:'블로그·SNS', name:'인스타그램 운영', desc:'주 3회, 월 12건 (릴스 2건 포함)', unit:'식', price:1000000, type:'monthly', max:1, per:12, content:true},
@@ -541,6 +541,10 @@ const GEO_CMP = {
     ['검수','오탈자 · 문장 · 키워드','+ 타깃 키워드 재검수 · 사실관계'],
     ['발행 후','발행 링크 + 기본 성과(조회·유입)','+ 글별 AI 답변 반영 점검 → 다음 달 주제 조정'],
   ],
+  guide:{
+    base:['브랜드 기준표대로 브랜드명·서비스명·대표 표현 통일 (기사·블로그·홈페이지 같은 표현)','첫 문단 2~3문장 핵심 요약: 누가 · 무엇을 · 어디서 · 왜','키워드 반영 · 오탈자 · 문장 검수'],
+    boost:['쓰기 전 타깃 질문 3~5개 설계 (고객이 AI에게 실제로 물을 문장) → 제목·소제목을 질문형으로','글 끝 Q&A 블록 2~3개: 질문 + 1~2문장 정답 (기사는 팩트 박스: 설립연도·서비스·수치)','수치·공식 자료는 출처 표기','발행 전 타깃 키워드 누락·오기 재검수, 사실관계 확인','발행 1~2주 뒤 주요 AI 3곳에 타깃 질문 → 반영 여부 기록, 다음 달 주제에 반영'],
+  },
   common:'두 가지 모두 블로그 운영 전략·키워드 조사와 월간 AI 노출 리포트(질문 20개 × 주요 AI 3곳)가 기본 포함입니다. AI 답변 노출은 보장하지 않으며, 매달 측정해 숫자로 보여드립니다.',
   basicFit:'기본으로 충분한 경우: 네이버 지도·블로그 검색이 주 유입인 동네 매장, 체험단처럼 후기 노출이 목적인 글, 발행량을 먼저 늘려야 할 때. AI 답변에 빨리 올라가야 하면 + AI 부스터.',
 };
@@ -576,8 +580,8 @@ const INFO = {
   audit:{what:'고객이 AI에게 실제로 물어볼 질문을 던져, 우리 브랜드가 답변에 나오는지 확인합니다.', scope:['타깃 질문 30개 설계','주요 AI 서비스별 언급 여부 정리','경쟁사 비교'], out:'진단 리포트 1부', cases:[]},
   web:{what:'처음부터 AI와 검색엔진이 브랜드를 정확히 읽고 인용하도록 설계한 홈페이지를 만듭니다.', scope:['브랜드·서비스 정보 구조 설계 (AI가 답변에 쓰는 질문 기준)','반응형 홈페이지 디자인·제작','구조화 데이터(스키마)·FAQ·llms.txt 기본 적용','검색 등록 (구글 서치콘솔·네이버 서치어드바이저)','문의 폼 연결'], out:'오픈된 홈페이지 + 적용 체크리스트', note:'웹사이트 구조화 데이터 세팅이 포함되어 있어 따로 선택하지 않아도 됩니다. 도메인·호스팅 비용은 별도입니다. 회원 로그인·결제·예약 등 기능 개발(백엔드)은 포함되지 않으며, 필요하면 검증된 전문 개발사와 연계해 별도로 견적을 드립니다.', cases:[]},
   schema:{what:'지금 있는 홈페이지를 고쳐서, AI와 검색엔진이 회사명·서비스·지역·연락처를 정확히 읽게 만듭니다. 새로 만들기 전에 먼저 고쳐 보는 방법입니다.', scope:['① 측정: 현재 홈페이지를 AI가 얼마나 읽는지 점검','② 기획: 고칠 곳과 우선순위 정리','③ 수정: 회사·서비스·FAQ 정보 표시(스키마), FAQ 구조, AI용 안내 파일(llms.txt) 적용'], out:'점검 결과 + 적용 완료 체크리스트', note:'홈페이지 수정 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다. 수정이 어려운 구조(일부 카페24 등 빌더형 사이트)는 점검 후 신규 제작을 권해 드릴 수 있습니다.', cases:[]},
-  blog:{what:'검색과 AI 답변에 인용되기 좋은 형태로 네이버 블로그 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
-  brandblog:{what:'브랜드 공식 블로그를 운영하며 브랜드 소식과 전문 정보를 꾸준히 쌓습니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  blog:{what:'고객사 공식 네이버 블로그를 대신 운영합니다. 없으면 개설·세팅부터 도와드립니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
+  review:{what:'체험단·외부 블로거가 직접 방문·사용하고 후기를 올리도록 모집하고 관리합니다. 지역·후기 검색 노출이 목적입니다.', scope:['지역·업종 키워드 선정, 블로거 모집·선정','가이드 작성(필수 키워드·사진·광고 표시 문구)','게시물 확인·수정 요청, 게시 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 게시 목록 + 게시물 링크', note:'후기 글은 블로거가 쓰므로 AI 부스터는 적용하지 않습니다. 대가를 받은 후기는 광고 표시가 필수이며, 병의원은 의료법상 체험단을 진행하지 않습니다.', cases:[]},
   tistory:{what:'구글·AI 검색에 잘 잡히는 티스토리 블로그에 원고를 쓰고 발행합니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', cases:[]},
   ownblog:{what:'자사 홈페이지 블로그에 글을 쌓아, AI가 브랜드 공식 출처로 인용하도록 만듭니다.', scope:['블로그 운영 전략·키워드 조사 전략 수립 (기본 포함)','키워드 맵 기반 주제 선정·원고 작성·이미지 구성','홈페이지 블로그 발행 및 게시물 목록 공유','월 최소 5건부터 5건 단위'], out:'월간 발행 목록 + 게시물 링크', note:'홈페이지 블로그 게시 권한(관리자 계정 또는 개발 담당자 협조)이 필요합니다.', cases:[]},
   insta:{what:'주 3회 피드와 릴스를 기획·제작해 업로드합니다.', scope:['월 12건 (릴스 2건 포함)','기획·디자인·캡션','업로드 일정 관리'], out:'월간 콘텐츠 캘린더 + 게시물', cases:[]},
@@ -619,7 +623,7 @@ const INDUSTRY = {
   medical:{focus:['블로그','AI 부스터 콘텐츠','원장 인터뷰 기사'], kpi:'“[지역] [진료과목] 병원 추천” 질문에서 AI가 추천하는 병원으로 언급',
     caution:'의료법상 치료 경험담·전후 사진·과장 표현 제한, 의료광고 사전심의 대상 여부 확인 · 규정 표현 검수는 업종 단가에 포함', expert:true,
     add:[['brand',1,'원장 전문성이 병원 선택 기준 → 원장 인터뷰 기사']],
-    off:[['threads','짧은 SNS보다 검색형 정보가 중요 → 스레드 대신 블로그·기사 집중']]},
+    off:[['threads','짧은 SNS보다 검색형 정보가 중요 → 스레드 대신 블로그·기사 집중'],['review','의료법상 체험단(유인·알선) 소지 → 체험단 블로그 제외']]},
   pro:{focus:['대표 칼럼','블로그','AI 부스터 콘텐츠'], kpi:'“[분야] 전문 변호사·세무사 추천” 질문에서 대표 이름이 언급',
     caution:'변호사·세무사 광고 규정상 승소율·최고·전문 표현 제한 여부 확인 · 규정 표현 검수는 업종 단가에 포함', expert:true,
     add:[['column',2,'전문가 신뢰가 곧 수임 → 대표 칼럼 월 2편']],
@@ -643,9 +647,10 @@ const INDUSTRY = {
     caution:'도입 사례·고객사 로고 사용 전 고객사 동의, 수치 성과는 근거 자료 확보',
     add:[['press',2,'도입 사례·수주 소식이 신뢰 근거 → 보도자료 월 2건'],['pressP',1,'업계 매체 노출 확대 → 제휴 매체 보도자료 월 1건',true],['column',1,'의사결정자 설득 → 대표 칼럼 월 1편']],
     off:[['insta','의사결정자는 인스타보다 기사·검색 → 인스타그램 제외']]},
-  local:{focus:['블로그(지역 키워드)','인스타그램','AI 부스터 콘텐츠'], kpi:'“[지역] [업종] 추천” 질문에서 매장명이 언급, 방문·예약 문의 증가',
+  local:{focus:['체험단 블로그(지역 키워드)','인스타그램','네이버 플레이스'], kpi:'“[지역] [업종] 추천” 질문에서 매장명이 언급, 방문·예약 문의 증가',
     caution:'체험단·협찬 글은 광고 표시, 음식·건강 관련 효능 표현 주의',
-    add:[['blog',30,'지역명 검색 경쟁이 치열 → 블로그 월 30건'],['insta',1,'방문 결정은 사진에서 → 인스타그램 운영']], off:[]},
+    add:[['review',30,'방문 후기 검색이 핵심 → 체험단 블로그 월 30건'],['insta',1,'방문 결정은 사진에서 → 인스타그램 운영']],
+    off:[['blog','소상공인은 체험단 후기가 주력 → 브랜드 블로그 대신 체험단 블로그']]},
   franchise:{focus:['보도자료','브랜드 인터뷰 기사','블로그'], kpi:'“[업종] 프랜차이즈 창업 추천” 질문에서 브랜드명이 언급, 가맹 문의 증가',
     caution:'가맹사업법상 예상 매출·수익 보장 표현 금지, 수치는 정보공개서 기준으로만 사용',
     add:[['press',2,'신규 오픈·가맹 실적이 신뢰 근거 → 보도자료 월 2건'],['brand',1,'본사의 철학과 운영 역량을 공식 기록으로 → 대표 인터뷰 기사']], off:[]},
@@ -696,7 +701,8 @@ const SUBS = {
 const LV = ['','필수','핵심','권장','선택','보류'];
 // 시트 채널 → 플래너 항목. full: 필수(1) 최소 수량, base: 핵심(2) 최소 수량(Starter 제외), 4·5(선택·보류)면 제외
 const CH_MAP = [
-  {ch:['네이버 블로그'], id:'blog', full:25, base:15, label:'네이버 블로그'},
+  {ch:['네이버 블로그'], id:'blog', full:25, base:15, label:'브랜드 블로그'},
+  {ch:['체험단 블로그'], id:'review', full:10, base:5, label:'체험단 블로그'},
   {ch:['티스토리'], id:'tistory', full:10, base:5, label:'티스토리'},
   {ch:['스레드'], id:'threads', full:1, base:1, label:'스레드 운영'},
   {ch:['인스타 릴스','인스타 피드'], id:'insta', full:1, base:1, label:'인스타그램 운영'},
@@ -714,6 +720,7 @@ function applySub(key, why){
   const tag = t => `[${s.name}] `+t;
   CH_MAP.forEach(m=>{
     const lv = imp(s.d, s.i, m.ch); if(!lv) return;
+    if(m.id==='review' && S.industry==='medical') return;   // 병의원 체험단은 의료법상 제외
     const nm = m.ch.join('·');
     if(lv>=4){ [m.id, ...(m.alsoOff||[])].forEach(id=>{ if(S.qty[id]){ S.qty[id]=0; if(id===m.id) why.push(tag(`${nm} ${LV[lv]}(${lv}) → ${m.label} 제외`)); } }); return; }
     if(m.premiumOnly){ if(lv===1 && !S.qty[m.id] && S.have.has('youtube')) why.push(tag(`${nm} 필수(1) → ${m.label}은 Premium에 포함, 예산 여유 시 추가 권장`)); return; }
@@ -742,13 +749,13 @@ function haveCheck(why){
     Object.entries(HAVE).forEach(([k,c])=>{
       if(S.have.has(k)) return;
       const lv = imp(s.d, s.i, c.ch);
-      const planIds = {blog:['blog','brandblog','tistory','ownblog'], insta:['insta'], threads:['threads'], press:['press','pressP','pressM','brand','column']}[k];
+      const planIds = {blog:['blog','review','tistory','ownblog'], insta:['insta'], threads:['threads'], press:['press','pressP','pressM','brand','column']}[k];
       const tip = planIds && !planIds.some(id=>S.qty[id]>0) ? '다음 단계에서 시작 권장 (이번 구성에는 미포함)' : c.tip;
       if(lv===1 || lv===2) why.push(`[${s.name}] ${c.name} ${LV[lv]}(${lv})인데 운영 안 함 → ${tip}`);
     });
   }
   if(S.have.has('press')) why.push('기존 기사 보유 → 제휴·메이저 매체 보도자료로 노출 범위 확대 가능');
-  const inPlan = {blog:['blog','brandblog','tistory','ownblog'], insta:['insta'], threads:['threads'], youtube:['youtube','shorts']};
+  const inPlan = {blog:['blog','review','tistory','ownblog'], insta:['insta'], threads:['threads'], youtube:['youtube','shorts']};
   const keep = [...S.have].filter(k=>inPlan[k] && inPlan[k].some(id=>S.qty[id]>0)).map(k=>HAVE[k].name);
   if(keep.length) why.push(`운영 중: ${keep.join('·')} → 기존 계정 이어서 운영 (신규 개설 비용 없음)`);
   if(S.have.has('web') && S.setup.web){ S.setup.web = false; why.push('홈페이지 보유 → 새로 만들지 않고 구조화 데이터 세팅으로 수정'); if(!S.setup.schema) S.setup.schema = true; }
@@ -758,7 +765,7 @@ function haveCheck(why){
    고민(PAIN)·목표(goals)로 들어간 항목은 보호 (영상 제외) */
 const BUDGET_CAP = {low:3000000, mid:7000000};
 const FIT_STEPS = [   // [항목, 줄일 수량, 리포트 표기]
-  ['pressM',0,'메이저 보도자료'],['pressP',0,'제휴 매체 보도자료'],['tistory',0,'티스토리'],['card',0,'카드뉴스'],['brandblog',0,'브랜드 블로그'],['ownblog',0,'홈페이지 블로그'],
+  ['pressM',0,'메이저 보도자료'],['pressP',0,'제휴 매체 보도자료'],['tistory',0,'티스토리'],['card',0,'카드뉴스'],['review',0,'체험단 블로그'],['ownblog',0,'홈페이지 블로그'],
   ['column',1,'칼럼 월 1편으로'],['blog',15,'블로그 월 15건으로'],
   ['brand',0,'인터뷰 기사'],['press',0,'보도자료'],['insta',0,'인스타그램'],['threads',0,'스레드'],
 ];
@@ -833,6 +840,8 @@ function recommend(forceKey){
     ind.off.forEach(([id,r])=>{ if(S.qty[id]){ S.qty[id] = 0; why.push(tag(r)); } });
     ind.add.forEach(([id,n,r,notLow])=>{ if(notLow && key==='starter') return; if((S.qty[id]||0)<n){ S.qty[id] = n; why.push(tag(r)); } });
   }
+  // 소상공인은 체험단 후기가 주력 → 패키지 기본 브랜드 블로그 수량을 체험단 블로그로 옮김 (11/9 결정)
+  if(S.industry==='local' && S.qty.blog){ S.qty.review = Math.max(S.qty.review||0, S.qty.blog); S.qty.blog = 0; why.push(tag('소상공인은 체험단 후기가 주력 → 브랜드 블로그 대신 체험단 블로그 월 '+S.qty.review+'건')); }
   // 고민 해결 항목은 업종 규칙으로 빠졌더라도 다시 넣는다 (문제 해결이 우선)
   const pain = PAIN[S.pain], ptag = s => `[고민] `+s;
   (pain.setup||[]).forEach(([id,r])=>{ if(!S.setup[id]){ S.setup[id] = true; why.push(ptag(r)); } });
@@ -1026,7 +1035,7 @@ function openCmp(from){
   const b = byId('blog'), cur = !S.industry ? '' : ['medical','pro','local'].includes(S.industry) ? S.industry : 'etc';
   const tr = (name, n, add, on) => `<tr class="${on?'on':''}"><th scope="row">${name}</th><td class="n">${won(n)}</td><td class="n g">${won(n+add)}</td><td class="n">+${won(add)}</td></tr>`;
   const blogRows = [['medical','메디컬'],['pro','전문직'],['etc','그 외 업종'],['local','소상공인']].map(([k,t])=>{
-    const n = BLOG_RATE[k]||b.price; return tr(`블로그 · ${t}${k===cur?' (선택 업종)':''}`, n, GEO_ADD(b,k), k===cur); }).join('');
+    const n = BLOG_RATE[k]||b.price; return tr(`브랜드 블로그 · ${t}${k===cur?' (선택 업종)':''}`, n, GEO_ADD(b,k), k===cur); }).join('');
   const artRows = CATALOG.filter(c=>c.geo==='article').map(c=>tr(c.name, c.price, GEO_ADD(c), false)).join('');
   $('svCard').classList.add('wide');
   $('svCard').innerHTML = `
@@ -1037,6 +1046,7 @@ function openCmp(from){
       <tbody>${GEO_CMP.all.map(([k,a,g])=>`<tr><th scope="row">${k}</th><td>${a}</td><td class="g">${g}</td></tr>`).join('')}</tbody></table></div>
     <div class="sv-b only-full"><b>가격 (건당 · VAT 별도 · 블로그는 월 25건 기준)</b>
       <table class="cmp"><thead><tr><th></th><th class="n">기본</th><th class="n g">+ AI 부스터</th><th class="n">차이</th></tr></thead><tbody>${blogRows}${artRows}</tbody></table></div>
+    <details class="sv-b only-full"><summary><b>작성 기준 (내부용 · 발표 모드에선 숨김)</b></summary><p style="font-size:13px;margin:6px 0 2px"><b>기본 · 모든 글</b></p><ul>${GEO_CMP.guide.base.map(x=>`<li>${x}</li>`).join('')}</ul><p style="font-size:13px;margin:8px 0 2px;color:var(--accent)"><b>+ AI 부스터 · 추가</b></p><ul>${GEO_CMP.guide.boost.map(x=>`<li>${x}</li>`).join('')}</ul><p style="font-size:12px;color:var(--muted)">체험단 블로그는 블로거가 쓰므로 가이드(필수 키워드·사진·광고 표시)만 전달, 부스터 미적용.</p></details>
     <p style="font-size:13px;color:var(--muted)">${GEO_CMP.common}</p>
     <p class="sv-note">${GEO_CMP.basicFit}</p>`;
   $('sv').hidden = false; $('svCard').querySelector('.sv-x').focus();
